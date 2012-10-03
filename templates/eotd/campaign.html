@@ -1,0 +1,119 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Edit Campaign" %}{% endblock %}
+
+{% block body %}
+    <form method="post" id="formObject" action="/eotd/campaign/{{campaign_id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
+<div style="width=100%; display:block; clear:both;">
+            <table>
+                <tbody>
+                    <tr>
+                    {% if campaign_id == '0' %}
+                        <td><h1>{% trans "Create new campaign"%}</h1></td><td>{{formObject.name}}</td></tr>
+                        {% else %}
+                        {% if user.is_authenticated and request.user == campaign_owner %}
+                            <td><h1>{% trans "Edit campaign"%}</h1></td><td>{{formObject.name}}</td>
+                        {% else %}
+                        <td><h1>{% trans "View campaign"%}</h1></td><td>{{formObject.name.value}}</td>
+                        {% endif %}
+                    {% endif %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {{ formset.management_form }}
+
+        <div style="width:100%; clear:both;">
+            <div class="leftDouble">
+                <table>
+                    <tbody>
+                        {% if campaign_id == '0' or user.is_authenticated and request.user == campaign_owner %}
+                        <tr><td>{{formObject.secret.label}}</td><td>{{formObject.secret}}</td></tr>
+                        {% endif %}
+                        <tr><td>{{formObject.coins.label}}</td><td>{{formObject.coins}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rightDouble">
+                <table>
+                    <tbody>
+                        <tr><td>{% trans 'Description' %}</td><td>{{formObject.description}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if campaign_id == '0' or user.is_authenticated and request.user == campaign_owner %}
+        <div style="width=100%; display:block; clear:both;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
+                        <td> <button name="delete" type="submit" id="id_delete">{% trans "delete" %}</button> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+
+
+        </form>
+
+        {% if campaign_id != '0' %}
+        <div style="width=100%; display:block; clear:both;">
+            <h1>{% trans 'Teams' %}</h1>
+            <table>
+                <thead>
+                <tr>
+                    <th>{% trans 'Name' %}</th>
+                    <th>{% trans 'Owner' %}</th>
+                    <th>{% trans 'Team value' %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for item in campaign.teams.all %}
+                    <tr>
+                        <td><a href="/eotd/teams/{{item.id}}/">{{item.name}}</a></td>
+                        <td><a href="/profiles/profile/{{item.owner}}/">{{item.owner}}</a></td>
+                        <td>{{item.coins}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if campaign_id != '0' and user.is_authenticated %}
+        <form method="post" id="joinCampaign" action="/eotd/campaign/{{campaign_id}}/join/" enctype="multipart/form-data"> {% csrf_token %}
+            <div style="width=100%; display:block; clear:both;">
+                <table>
+                    <tbody>
+                        {% if request.user not in campaign.players.all %}
+                        <tr>
+                            <td> <button name="apply" type="submit">{% trans "Apply to join Campaign" %}</button> </td>
+                            <td> <button name="join" type="submit">{% trans "Join Campaign (enter password)" %}</button> </td><td><input type="text" name="password" id="id_password"/></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td> <button name="addTeam" type="button"><a href="/eotd/campaign/{{campaign_id}}/team/add/">{% trans "Add pre-existing team" %}</a></button> </td>
+                            <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/coins/{{campaign.coins}}/" >{% trans "Create new team for this campaign" %}</a></button> </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+        {% endif %}
+
+{% endblock %}

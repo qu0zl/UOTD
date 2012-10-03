@@ -1,0 +1,40 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% block extra_head %}
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() 
+    { 
+        $("#id_campaign_table").tablesorter({sortList: [[0,0]]} ); 
+    } 
+    ); 
+</script>
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "View Campaigns" %}{% endblock %}
+
+{% block body %}
+{% if campaigns %}
+<h1>{% trans "Campaigns" %}</h1>
+<table id="id_campaign_table">
+<thead> 
+<tr> 
+    <th>{% trans 'Name' %}</th> 
+    <th>{% trans 'Owner' %}</th> 
+    <th>{% trans 'Size' %}</th> 
+</tr> 
+</thead> 
+    <tbody>
+    {% for item in campaigns %}
+    <tr><td><a href="/eotd/campaign/{{item.id}}/">{{item.name}}</a></td>
+        <td>{{item.owner.get}}</td>
+        <td>{{item.coins}}</td>
+    </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

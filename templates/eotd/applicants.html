@@ -1,0 +1,42 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% block extra_head %}
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() 
+    { 
+        $("#id_player_table").tablesorter({sortList: [[0,0]]} ); 
+    } 
+    ); 
+</script>
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Out-standing campaign applications" %}{% endblock %}
+
+{% block body %}
+{% if applicants %}
+<h1>{% trans "Players" %}</h1>
+<table id="id_player_table">
+<thead> 
+<tr> 
+    <th>{% trans 'Name' %}</th> 
+    <th>{% trans 'Approve' %}</th> 
+    <th>{% trans 'Deny' %}</th> 
+</tr> 
+</thead> 
+    <tbody>
+    {% for item in applicants %}
+    <tr><td><a href="/profiles/profile/{{item.user}}/">{{item.user}}</a></td>
+        <td><a href="/eotd/campaign/applicant/{{item.id}}/approve">{% trans 'Approve' %}</a></td>
+        <td><a href="/eotd/campaign/applicant/{{item.id}}/deny">{% trans 'Deny' %}</a></td>
+    </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<h2>{% trans 'No out-standing player applications.' %}
+{% endif %}
+{% endblock %}

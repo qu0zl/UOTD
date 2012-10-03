@@ -1,0 +1,71 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Edit Team" %}{% endblock %}
+
+{% block body %}
+        {% if user.is_authenticated and request.user == team.owner %}
+        <form method="post" id="formObject" action="/eotd/team/{{team.id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
+        {{ formset.management_form }}
+        <h1>{% trans "Edit team"%}</h1>
+        <div style="width:100%; clear:both;">
+            <div class="leftDouble">
+                <table>
+                    <tbody>
+                        <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
+                        <tr><td>{% trans 'Coins' %}</td><td>{{team.coins}}</td></tr>
+                        <tr><td>{% trans 'Faction' %}</td><td>{{team.faction}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rightDouble">
+                <table>
+                    <tbody>
+                        <tr><td>{% trans 'Description' %}</td><td>{{formObject.description}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="width=100%; display:block; clear:both;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+        <div style="width=100%; display:block; clear:both;">
+            <table>
+                <thead>
+                    <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in team.faction.unit_templates.all %}
+                    <tr>
+                        <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </form>
+
+        {% else %}
+        <h1>{% trans "You are not authorized to edit this team."%}</h1>
+        {% endif %}
+
+
+
+{% endblock %}

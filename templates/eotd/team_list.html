@@ -1,0 +1,110 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}tsThemes/blue/style.css" type="text/css" id="" media="print, projection, screen" />
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.form.js"></script>
+<script type="text/javascript">
+    function filter (e) {
+        $.post( '/eotd/list/filter/', 
+                { publish: $('#id_filter_publish').val(), owner: $('#id_filter_owner').val(), manu:$('#id_filter_manu').val(), unit_type:$('#id_filter_unit_type').val(),
+                cost_min: $('#id_filter_cost_min').val(), cost_max: $('#id_filter_cost_max').val(), image: $('#id_filter_image').val(),
+                rating_min: $('#id_filter_rating_min').val(),},
+        function( data ) {
+            $("#id_list_table" ).empty().append( data );
+            $("#id_unit_table").trigger("update");
+        });
+        e.preventDefault();
+    }
+    function resetFilters (e) {
+        {% if user.is_authenticated %}
+        $.post( '/eotd/set/filters/', 
+                { },
+            function( ) {
+                alert("{% trans 'User profile default filters reset to Grunt'o'Matic defaults.' %}");
+        });
+        {% else %}
+        alert("{% trans 'Saving filter settings requires a free user account. Please register or login.' %}");
+        {% endif %}
+        e.preventDefault();
+    }
+    function setFilters (e) {
+        {% if user.is_authenticated %}
+        $.post( '/eotd/set/filters/', 
+                { publish: $('#id_filter_publish').val(), owner: $('#id_filter_owner').val(), manu:$('#id_filter_manu').val(), unit_type:$('#id_filter_unit_type').val(),
+                cost_min: $('#id_filter_cost_min').val(), cost_max: $('#id_filter_cost_max').val(), image: $('#id_filter_image').val(),
+                rating_min: $('#id_filter_rating_min').val(),},
+            function( ) {
+                alert("{% trans 'Set.' %}");
+        });
+        {% else %}
+        alert("{% trans 'Saving filter settings requires a free user account. Please register or login.' %}");
+        {% endif %}
+        e.preventDefault();
+    }
+    function forceUpdate(e){
+        $('#multi_PDF').ajaxSubmit({url:'/eotd/list/addForceEntry/',
+            success: function(){ 
+            $('select[name^="force_"]').val('');
+            $('#id_force').html("{% trans "Done" %}").delay('slow').queue(function(n) {
+                            $(this).html("{% trans "Add to Force" %}");
+                            n();})
+            },});
+    e.preventDefault();
+    }
+    $(document).ready(function() { 
+        $.ajaxSetup ({
+            cache: false
+            });
+        $('#id_force').click(forceUpdate);
+        $("#id_unit_table").tablesorter({sortList: [[1,0],[0,0]], headers:
+            { 5: { sorter: false }, 6: { sorter: false } } });
+        $('select[id^="id_filter_"]').change(filter);
+        $('#id_set_filters').click(setFilters);
+        $('#id_reset_filters').click(resetFilters);
+    } 
+    ); 
+</script>
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "List Teams" %}{% endblock %}
+
+{% block body %}
+<h1>{% trans "Teams" %}</h1>
+{% comment %} greg fix this
+<div>
+    <h4>{% trans "Filter by:" %}
+        {%include 'eotd/filters.html' %}
+        <button name="set_filters" id="id_set_filters" type="button">{% trans "Make Defaults" %}</button>
+        <button name="reset_filters" id="id_reset_filters" type="button">{% trans "Reset Saved Defaults" %}</button>
+    </h4>
+</div>
+{% endcomment %}
+
+
+<form method="post" id="multi_PDF" action="/eotd/list/handle/" enctype="multipart/form-data"> {% csrf_token %}
+<table id="id_unit_table">
+<thead> 
+<tr> 
+    <th>{% trans 'Name' %}</th> 
+    <th>{% trans 'Owner' %}</th> 
+    <th>{% trans 'Cost' %}</th>
+</tr> 
+</thead> 
+    <tbody id="id_list_table">
+        {% if teams %}
+            {% include 'eotd/team_list_table.html' %}
+            {% else %}
+            <tr><td>No</td><td>teams</td></tr>
+            {%comment%}
+            greg make this fit the number of cells once you know what it is
+            <tr><td>No</td><td>teams.</td><td>Check</td><td>your</td><td>default</td><td>filter</td><td>settings.</td></tr>
+            {%endcomment %}
+        {% endif %}
+    </tbody>
+</table>
+</form>
+{% endblock %}

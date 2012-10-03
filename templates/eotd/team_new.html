@@ -1,0 +1,55 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Create New Team" %}{% endblock %}
+
+{% block body %}
+        {% if user.is_authenticated %}
+        <form method="post" id="formObject" action="/eotd/team/0/save/" enctype="multipart/form-data"> {% csrf_token %}
+        {{ formset.management_form }}
+        <h1>{% trans "Create new team"%}</h1>
+        <div style="width:100%; clear:both;">
+            <div class="leftDouble">
+                <table>
+                    <tbody>
+                        <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
+                        <tr><td>{{formObject.coins.label}}</td><td>{{formObject.coins}}</td></tr>
+                        <tr><td>{{formObject.faction.label}}</td><td>{{formObject.faction}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rightDouble">
+                <table>
+                    <tbody>
+                        <tr><td>{% trans 'Description' %}</td><td>{{formObject.description}}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="width=100%; display:block; clear:both;">
+            <table>
+                <tbody>
+                    <tr>
+                        <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        </form>
+
+        {% else %}
+        <h1>{% trans "You must login to create a new team."%}</h1>
+        {% endif %}
+
+
+
+{% endblock %}
