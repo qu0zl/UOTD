@@ -4,6 +4,71 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />  
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.2.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.24.custom.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<script type="text/javascript">
+
+$(document).ready(function() {
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $( "input:submit, .link, button" ).button();
+
+    $("#name_dialog").dialog({
+        width: 400,
+        height: 180,
+        bgiframe: true,
+        autoOpen: false,
+        modal: true,
+        buttons: {
+            '{% trans 'Update Name' %}': function(){
+                $.ajax({
+                    type: 'POST',
+                    url: "/eotd/unit/"+$('#'+$(this).data('caller').id).val()+"/rename/",
+                    data: {'name':$(this).find('input').val()},
+                    dataType: "json",
+                    context: $(this),
+                    success: function(data){
+                        //$("span", $('#'+$(this).data('caller').id)).html( $(this).find('input').val() );
+                        $('#'+$(this).data('caller').id).button( "option", "label", $(this).find('input').val() );
+                        $(this).dialog('close');
+                    }
+                });
+            },
+            'Cancel': function(){
+                $(this).dialog('close');
+            }
+        },
+        open: function(event){
+            // Set the input to contain the current name
+            $(this).find('input').val( $('#'+$(this).data('caller').id).text()  );
+              },
+        /*
+        close: function(){
+           alert($(this).find('input').val());
+            $(this).find('input').val('');
+        }*/
+    });
+
+    $('.name_button').click(function() {
+        $("#name_dialog").data('caller', this).dialog('open');
+        // prevent the default action, e.g., following a link
+        return false;
+    });
+});
+</script>
 {% endblock extra_head %}
 
 {% load ifsetting_tag %}
@@ -47,6 +112,31 @@
     </form>
 
         <div style="width=100%; display:block; clear:both;">
+            <table class="ui-widget">
+                <thead class="ui-widget-header">
+                    <tr><th>{% trans 'Name' %}</th><th>{% trans 'Role' %}</th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
+                </thead>
+                <tbody class="ui-widget-content">
+                    {% for item in team.units.all %}
+                    <tr>
+                        <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
+                        </tr>
+                        {% if item.weapons.all %}
+                        <tr><td></td>
+                            <td colspan="12">
+                                {% for weapon in item.weapons.all %}
+                                {% if forloop.counter > 1 %}, {% endif %}
+                                {{weapon}}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="width=100%; display:block; clear:both;">
             <table>
                 <thead>
                     <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
@@ -54,18 +144,17 @@
                 <tbody>
                     {% for item in team.faction.unit_templates.all %}
                     <tr>
-                        <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
+                        <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        </form>
 
         {% else %}
         <h1>{% trans "You are not authorized to edit this team."%}</h1>
         {% endif %}
 
 
-
+<div id="name_dialog" title="Dialog Title" style="display:none"><input type="text" id="name_input"></input></div>
 {% endblock %}
