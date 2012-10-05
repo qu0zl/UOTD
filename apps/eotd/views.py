@@ -286,3 +286,22 @@ def unitName(request, unit_id):
         print 'unitName Exception', e
         return HttpResponseBadRequest(_('Failed to update name'))
 
+def weaponMove(request):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            fromUnit = eotd.models.Unit.objects.get(id=request.POST['from'])
+            toUnit = eotd.models.Unit.objects.get(id=request.POST['to'])
+            weaponEntry = eotd.models.UnitWeapon.objects.filter(unit=fromUnit, weapon__id=request.POST['weapon'])[0]
+            if fromUnit.team.owner != request.user:
+                raise Exception("Unauthorized attempt to edit team.")
+            if fromUnit.team != toUnit.team:
+                raise Exception("Units are not on the same team.")
+            toUnit.allowedWeapon(weaponEntry.weapon) # will raise exception if illegal
+            weaponEntry.unit=toUnit
+            weaponEntry.save()
+        else:
+            return HttpResponseBadRequest(_('User unauthorised.'))
+    except Exception as e:
+        return HttpResponseBadRequest(_('Failed to move weapon'))
+    return HttpResponse()
+

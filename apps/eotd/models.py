@@ -80,6 +80,25 @@ WEAPON_STRENGTH_CHOICES = (
     (10,  _('10')),
 )
 
+# need to link this to unitTemplate
+# via a through model that controls if this is a normal or special access list
+class SkillList(models.Model):
+    def __unicode__(self):
+        return self.name
+
+# need to link this to unitTemplate
+# via a through model
+class WeaponList(models.Model):
+    def __unicode__(self):
+        return self.name
+    name = models.CharField(max_length=100)
+    weapons = models.ManyToManyField('Weapon', related_name='weapon_lists', default=None, blank=False)
+        
+class Skill(models.Model):
+    def __unicode__(self):
+        return self.name
+    name = models.CharField(max_length=100)
+
 class Weapon(models.Model):
     HANDS_CHOICES = (
         (1, _('1')),
@@ -121,8 +140,17 @@ class Faction(models.Model):
     bravadoMod = models.SmallIntegerField(default=0, blank=False)
     arcaneMod = models.SmallIntegerField(default=0, blank=False)
 
+class UnitTemplateSkill(models.Model):
+    skill = models.ForeignKey('Skill')
+    unitTemplate = models.ForeignKey('UnitTemplate')
+
 class UnitTemplateWeapon(models.Model):
     weapon = models.ForeignKey('Weapon')
+    unitTemplate = models.ForeignKey('UnitTemplate')
+
+class UnitTemplateWeaponList(models.Model):
+    medievalOnly = models.BooleanField(default=False)
+    weaponLists = models.ForeignKey('WeaponList')
     unitTemplate = models.ForeignKey('UnitTemplate')
 
 class UnitWeapon(models.Model):
@@ -143,6 +171,7 @@ class UnitTemplate(models.Model):
         return self.name
     faction = models.ManyToManyField(Faction, related_name='unit_templates', default=None, blank=False)
     name = models.CharField(max_length=100)
+    weaponLists = models.ManyToManyField(WeaponList, related_name='unit_template_weaponlists', default=None, blank=False, through='UnitTemplateWeaponList')
     supernatural = models.BooleanField(default=False)
     # If maxCount > 0 then that is the maximum number of that unitType in a faction
     maxCount = models.SmallIntegerField(default=0, blank=False)
@@ -168,6 +197,8 @@ class UnitTemplate(models.Model):
 class Unit(models.Model):
     class Meta:
         ordering = ['unitOrder']
+    def __unicode__(self):
+        return self.name
     # base unit template on which this unit is modified.
     # All statistics are calculated as differences from this template unit
     baseUnit = models.ForeignKey(UnitTemplate, default=None, blank=False)
@@ -182,6 +213,31 @@ class Unit(models.Model):
     # used for unit ordering in a team
     unitOrder = models.SmallIntegerField(default=999, blank=False)
 
+    def allowedWeapon(self, weapon):
+        for aList in self.baseUnit.weaponLists.all():
+            if weapon in aList.weapons.all():
+                # check for limitations on mediveal weapons
+                #u.baseUnit.unittemplateweaponlist_set.get(unitTemplate=u.baseUnit, weaponLists=u.baseUnit.weaponLists.all()[0])
+                if weapon.medieval or not self.baseUnit.unittemplateweaponlist_set.get(unitTemplate=self.baseUnit, weaponLists=aList).medievalOnly:
+                    return
+        raise Exception("Illegal weapon choice")
+
+    def addWeapon(self, weapon):
+        try:
+            print 'allowedWeaponed says',self.allowedWeapon(weapon)
+            newWeapon = UnitWeapon(weapon=weapon, unit=self)
+            newWeapon.save()
+            return True
+        except Exception as e:
+            print 'Failed to add weapon', e
+            return False
+
+    @property
+    def medieval(self):
+        for aList in self.baseUnit.unittemplateweaponlist_set.all():
+            if aList.medievalOnly:
+                return True
+        return False   
     @property
     def leader(self):
         return self.unitLeaderOverride or self.baseUnit.leader
@@ -227,15 +283,12 @@ class Unit(models.Model):
     @property
     def weapons(self):
         return self.baseUnit.weapons.all() | self.unitWeapons.all()
-            # or can do it via chain
-            #weapon_list = sorted(
-            #    chain(self.baseUnit.weapons.all(), self.unitWeapons.all()),
-            #    key=lambda instance: instance.date_created)
-            #return weapon_list
-
-    # greg put team and owner in here too
-    #def __init__(self, *args, **kwargs):
-    #    super(Unit, self).__init__(*args, **kwargs)
+    @property
+    def baseWeapons(self):
+        return self.baseUnit.weapons.all()
+    @property
+    def boughtWeapons(self):
+        return self.unitWeapons.all()
 
 class Team(models.Model):
     name = models.CharField(max_length=100)

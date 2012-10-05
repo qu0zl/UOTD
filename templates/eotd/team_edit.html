@@ -10,6 +10,11 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.2.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.24.custom.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<style>
+    .weapon { display:inline-block;float:left;margin:1px;padding-left:4px;padding-right:4px;min-height:22px;}
+    .weapon-slot { width:100px; display:inline-block;float:left;margin:1px; min-height:18px;}
+    .weapon_row { padding:1px 8px 1px; }
+</style>
 <script type="text/javascript">
 
 $(document).ready(function() {
@@ -27,7 +32,35 @@ $(document).ready(function() {
         }
     });
     $( "input:submit, .link, button" ).button();
+    $('.weapon-slot').click(function(){alert("greg");});
 
+    $(".bought-weapon" ).draggable({ revert: "invalid",
+        start: function(event, ui) {
+        $(this).data('startPosition', ui.position);
+        },
+    });
+    $(".weapon-slot" ).droppable({activeClass: "ui-state-hover",
+        drop: function(event, ui) { 
+            var source = ui.draggable.attr("id").split('_');
+            var fromUnit = source[0];
+            var weapon = source[1]
+            var toUnit = $(this).attr("id").split('_')[1]
+            $.ajax({
+                type: 'POST',
+                url: "/eotd/weapon/move/",
+                data: {'from':fromUnit, 'to':toUnit, 'weapon':weapon},
+                dataType: "json",
+                context: $(this),
+                success: function(data){
+                    ui.draggable.attr("id",toUnit+"_"+weapon);
+                },
+                error: function(data){
+                    $(ui.draggable).animate($(ui.draggable).data('startPosition'), 500);
+                }
+            });
+        }
+        });
+    $(".medieval-slot").droppable({accept:".medieval-weapon"});
     $("#name_dialog").dialog({
         width: 400,
         height: 180,
@@ -136,22 +169,35 @@ $(document).ready(function() {
                         <tr>
                             <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
                         </tr>
-                        {% if item.weapons.all %}
                         <tr>
-                            <td></td>
-                            <td colspan="12">
-                                {% for weapon in item.weapons.all %}
-                                {% if forloop.counter > 1 %}, {% endif %}
-                                {{weapon}}
+                            <td class="weapon_row"><p></p></td>
+                            <td colspan="12" class="weapon_row">
+                            {% if item.weapons.all %}
+                                {% for weapon in item.baseWeapons.all %}
+                                {% comment %}{% if forloop.counter > 1 %}, {% endif %} {% endcomment %}
+                                <div class="weapon">
+                                    {{weapon}}
+                                </div>
                                 {% endfor %}
+
+                                {% for weapon in item.boughtWeapons.all %}
+                                {% comment %} greg{% if forloop.counter > 1 or item.baseWeapons %}, {% endif %} {% endcomment %}
+                                <div id="{{item.id}}_{{weapon.id}}" class="weapon bought-weapon ui-state-highlight {% if weapon.medieval %}medieval-weapon{% endif %}">
+                                    <p style="margin-bottom: 0px;">{{weapon}}</p>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="weapon-slot ui-state-conten {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
                             </td>
                         </tr>
-                        {% endif %}
                     </tbody>
                     {% endfor %}
             </table>
         </div>
 
+        <div style="width=100%; display:block; clear:both;">
+greg put team store here?
+        </div>
         <div style="width=100%; display:block; clear:both;">
             <table class="ui-widget">
                 <thead class="ui-widget-header">
