@@ -1,9 +1,11 @@
 {% extends "site_base.html" %}
 
 {% load i18n %}
+{% load widget_tweaks %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+<link rel="stylesheet" href="{{ STATIC_URL }}css/team_edit_1.0.0.css">
 <link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />  
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.2.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.24.custom.min.js"></script>
@@ -55,11 +57,6 @@ $(document).ready(function() {
             // Set the input to contain the current name
             $(this).find('input').val( $('#'+$(this).data('caller').id).text()  );
               },
-        /*
-        close: function(){
-           alert($(this).find('input').val());
-            $(this).find('input').val('');
-        }*/
     });
 
     $('.name_button').click(function() {
@@ -67,6 +64,23 @@ $(document).ready(function() {
         // prevent the default action, e.g., following a link
         return false;
     });
+    $('#unit_table').sortable({
+        items: 'tbody',
+        forcePlaceholderSize: true,
+        placeholder: 'group_move_placeholder',
+        update: function( event, ui ) {
+            $.ajax({
+                type: 'POST',
+                url: "/eotd/team/{{team.id}}/reorder/",
+                data: {'order':$(this).sortable('toArray')},
+                dataType: "json",
+                failure: function(data){
+                    alert("{%trans 'Unable to save updated team order.' %}");
+                },
+            });
+            }
+        });
+    // greg want disableSelection? $("#unit_table tbody").sortable().disableSelection();
 });
 </script>
 {% endblock extra_head %}
@@ -82,9 +96,10 @@ $(document).ready(function() {
         <h1>{% trans "Edit team"%}</h1>
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
-                <table>
-                    <tbody>
+                <table class="ui-widget-header">
+                    <tbody class="ui-widget-content">
                         <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
+                        <tr><td>{% trans 'Standing' %}</td><td></td></tr>
                         <tr><td>{% trans 'Coins' %}</td><td>{{team.coins}}</td></tr>
                         <tr><td>{% trans 'Faction' %}</td><td>{{team.faction}}</td></tr>
                     </tbody>
@@ -92,9 +107,9 @@ $(document).ready(function() {
             </div>
 
             <div class="rightDouble">
-                <table>
-                    <tbody>
-                        <tr><td>{% trans 'Description' %}</td><td>{{formObject.description}}</td></tr>
+                <table class="ui-widget">
+                    <tbody class="ui-widget-content">
+                        <tr><td>{% trans 'Description' %}</td><td>{{formObject.description|add_class:"ui-content"}}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -112,17 +127,18 @@ $(document).ready(function() {
     </form>
 
         <div style="width=100%; display:block; clear:both;">
-            <table class="ui-widget">
+            <table id="unit_table" class="ui-widget">
                 <thead class="ui-widget-header">
                     <tr><th>{% trans 'Name' %}</th><th>{% trans 'Role' %}</th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
                 </thead>
-                <tbody class="ui-widget-content">
                     {% for item in team.units.all %}
-                    <tr>
-                        <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
+                    <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
+                        <tr>
+                            <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
                         </tr>
                         {% if item.weapons.all %}
-                        <tr><td></td>
+                        <tr>
+                            <td></td>
                             <td colspan="12">
                                 {% for weapon in item.weapons.all %}
                                 {% if forloop.counter > 1 %}, {% endif %}
@@ -131,17 +147,17 @@ $(document).ready(function() {
                             </td>
                         </tr>
                         {% endif %}
+                    </tbody>
                     {% endfor %}
-                </tbody>
             </table>
         </div>
 
         <div style="width=100%; display:block; clear:both;">
-            <table>
-                <thead>
-                    <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
+            <table class="ui-widget">
+                <thead class="ui-widget-header">
+                    <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th><th></th></tr>
                 </thead>
-                <tbody>
+                <tbody class="ui-widget-content">
                     {% for item in team.faction.unit_templates.all %}
                     <tr>
                         <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>

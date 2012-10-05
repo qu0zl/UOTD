@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 import json
+from django.utils import simplejson
 from datetime import datetime
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, redirect, render
@@ -231,21 +232,57 @@ def teamSave(request, team_id):
     return teamForm(request, team_id)
 
 def teamHire(request, team_id, unit_id):
-    if request.user.is_authenticated() and request.method == 'POST':
+    if request.user.is_authenticated():
         try:
             team = eotd.models.Team.objects.get(id=team_id)
-            unitTemplate = eotd.models.UnitTemplate(id=unit_id)
+            unitTemplate = eotd.models.UnitTemplate.objects.get(id=unit_id)
             if (request.user != team.owner):
                 print 'Attempt by user %s to edit team owned by user %s' % (request.user, team.owner.get())
                 return HttpResponseForbidden(_('You are not authorized to edit this team. Are you logged in correctly?') )
-            if not team.hire(unitTemplate):
+            try:
+                coins = team.hire(unitTemplate)
+            except Exception as e:
+                print 'team.hire exception:', e
                 return HttpResponseBadRequest(_('You are not allowed hire this model. Check cost, multiple-leaders, etc.'))
         except Exception as e:
             print 'greg, exception caught in teamHire', e
+    else:
+        return HttpResponseForbidden(_('You are not logged in.'))
     return HttpResponseRedirect('/eotd/team/%s/' % team_id)
 
         # greg work for ajax and request.method == 'POST':
 
 def teamFire(request, team_id, unit_id):
     pass
+
+def teamReorder(request, team_id):
+    if request.is_ajax() and request.user.is_authenticated() and request.method == 'POST':
+        team = eotd.models.Team.objects.get(id=team_id)
+        if request.user == team.owner:
+            order = request.POST.getlist('order[]')
+            team.reorder(order)
+            print order
+            return HttpResponse()
+        else:
+            return HttpResponseBadRequest(_('User unauthorised.'))
+    else:
+        return HttpResponseBadRequest(_('Failed to update name'))
+
+
+def unitName(request, unit_id):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            if request.user == unit.team.owner:
+                print 'trying to set name to', request.POST['name']
+                unit.name = request.POST['name']
+                unit.save()
+                return HttpResponse()
+            else:
+                print request.user
+                print unit.owner
+                return HttpResponseBadRequest(_('User unauthorised.'))
+    except Exception as e:
+        print 'unitName Exception', e
+        return HttpResponseBadRequest(_('Failed to update name'))
 

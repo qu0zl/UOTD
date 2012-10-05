@@ -23,4 +23,6 @@ urlpatterns = patterns("",
     (r'^team/(\d+)/$', 'eotd.views.teamForm'),
     (r'^team/(\d+)/hire/(\d+)/$', 'eotd.views.teamHire'),
     (r'^team/(\d+)/fire/(\d+)/$', 'eotd.views.teamFire'),
+    (r'^team/(\d+)/reorder/$', 'eotd.views.teamReorder'),
+    (r'^unit/(\d+)/rename/$', 'eotd.views.unitName'),
 )
