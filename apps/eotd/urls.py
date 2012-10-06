@@ -25,5 +25,7 @@ urlpatterns = patterns("",
     (r'^team/(\d+)/fire/(\d+)/$', 'eotd.views.teamFire'),
     (r'^team/(\d+)/reorder/$', 'eotd.views.teamReorder'),
     (r'^unit/(\d+)/rename/$', 'eotd.views.unitName'),
+    (r'^unit/(\d+)/equip/$', 'eotd.views.unitEquipHTML'),
+    (r'^unit/(\d+)/buy/(\d+)/$', 'eotd.views.unitBuyHTML'),
     (r'^weapon/move/$', 'eotd.views.weaponMove'),
 )

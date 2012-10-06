@@ -305,3 +305,35 @@ def weaponMove(request):
         return HttpResponseBadRequest(_('Failed to move weapon'))
     return HttpResponse()
 
+# Do not put anything private in here as the user does NOT need to be authenticated.
+# I consider the equipment options available to a model to be public knowledge
+def unitEquipHTML(request, unit_id):
+    try:
+        if request.is_ajax():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            return render_to_response('eotd/unit_equipment.html', \
+                {
+                    'unit':unit,
+                }, \
+                RequestContext(request))
+    except Exception as e:
+        print 'unitEquipHTML Exception', e
+        return HttpResponseBadRequest(_('Failed to retrieve equipment options.'))
+
+def unitBuyHTML(request, unit_id, item_id):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            if request.user == unit.team.owner:
+                # greg unit.buy(item_id)
+                unit.save()
+                return render_to_response('eotd/unit_equipment.html', \
+                    {
+                        'unit':unit,
+                        }, \
+                    RequestContext(request))
+            else:
+                return HttpResponseBadRequest(_('User unauthorised.'))
+    except Exception as e:
+        print 'unitName Exception', e
+        return HttpResponseBadRequest(_('Error purchasing equipment. Please retry.'))

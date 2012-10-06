@@ -217,7 +217,6 @@ class Unit(models.Model):
         for aList in self.baseUnit.weaponLists.all():
             if weapon in aList.weapons.all():
                 # check for limitations on mediveal weapons
-                #u.baseUnit.unittemplateweaponlist_set.get(unitTemplate=u.baseUnit, weaponLists=u.baseUnit.weaponLists.all()[0])
                 if weapon.medieval or not self.baseUnit.unittemplateweaponlist_set.get(unitTemplate=self.baseUnit, weaponLists=aList).medievalOnly:
                     return
         raise Exception("Illegal weapon choice")
@@ -232,6 +231,13 @@ class Unit(models.Model):
             print 'Failed to add weapon', e
             return False
 
+    @property
+    def cost(self):
+        cost = self.baseUnit.cost
+        for item in self.unitWeapons.all():
+            cost = cost +item.cost
+        print cost
+        return cost
     @property
     def medieval(self):
         for aList in self.baseUnit.unittemplateweaponlist_set.all():
@@ -277,9 +283,6 @@ class Unit(models.Model):
     @property
     def arcane(self):
         return self.baseUnit.arcane + self.faction.arcaneMod
-    @property
-    def cost(self):
-        return self.baseUnit.cost
     @property
     def weapons(self):
         return self.baseUnit.weapons.all() | self.unitWeapons.all()

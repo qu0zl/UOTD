@@ -14,6 +14,7 @@
     .weapon { display:inline-block;float:left;margin:1px;padding-left:4px;padding-right:4px;min-height:22px;}
     .weapon-slot { width:100px; display:inline-block;float:left;margin:1px; min-height:18px;}
     .weapon_row { padding:1px 8px 1px; }
+    .equip_select { display:inline-block;float:left;margin:1px; }
 </style>
 <script type="text/javascript">
 
@@ -32,7 +33,7 @@ $(document).ready(function() {
         }
     });
     $( "input:submit, .link, button" ).button();
-    $('.weapon-slot').click(function(){alert("greg");});
+// greg remove     $('.weapon-slot').click(function(){alert("greg");});
 
     $(".bought-weapon" ).draggable({ revert: "invalid",
         start: function(event, ui) {
@@ -61,6 +62,59 @@ $(document).ready(function() {
         }
         });
     $(".medieval-slot").droppable({accept:".medieval-weapon"});
+    function update_purchase_dialog_html(html){
+        $("#purchase_dialog").html(html);
+        $( ".equip-button, .equip-and-close-button" ).button();
+        $('.equip-button').click({close:false},equip_click);
+        $('.equip-and-close-button').click({close:true},equip_click);
+    }
+    function equip_click(event){
+        var source = $(this).val().split('_');
+        var unit = source[0];
+        var weapon_list = source[1];
+        var weapon = $("#wl_"+weapon_list).val();
+        $.ajax({
+            type: 'POST',
+            url: "/eotd/unit/"+unit+"/buy/"+weapon+"/",
+            success: function(msg){
+            update_purchase_dialog_html(msg);
+                if (event.data.close)
+                    $("#purchase_dialog").dialog('close');
+            },
+            error: function(msg){
+                alert("{%trans 'Error' %}");
+            }
+        });
+        return false;
+    }
+    $("#purchase_dialog").dialog({
+        width: 480,
+        height: 320,
+        bgiframe: true,
+        autoOpen: false,
+        modal: true,
+        buttons: {
+            {% trans "'Close'"%}: function(){
+                $(this).dialog('close');
+            }
+        },
+        open: function(event){
+            $.ajax({
+                type: 'POST',
+                url: "/eotd/unit/"+$('#'+$(this).data('caller').id).val()+"/equip/",
+                context: $(this),
+                success: function(msg){
+                    update_purchase_dialog_html(msg);
+                    return false;
+                },
+                error: function(msg) {
+                    $("#purchase_dialog").dialog('close');
+                    alert(" {% trans 'Error' %}");
+                },
+            });
+        },
+    });
+
     $("#name_dialog").dialog({
         width: 400,
         height: 180,
@@ -76,7 +130,6 @@ $(document).ready(function() {
                     dataType: "json",
                     context: $(this),
                     success: function(data){
-                        //$("span", $('#'+$(this).data('caller').id)).html( $(this).find('input').val() );
                         $('#'+$(this).data('caller').id).button( "option", "label", $(this).find('input').val() );
                         $(this).dialog('close');
                     }
@@ -92,6 +145,11 @@ $(document).ready(function() {
               },
     });
 
+    $('.purchase_button').click(function() {
+        $("#purchase_dialog").data('caller', this).dialog('open');
+        // prevent the default action, e.g., following a link
+        return false;
+    });
     $('.name_button').click(function() {
         $("#name_dialog").data('caller', this).dialog('open');
         // prevent the default action, e.g., following a link
@@ -187,7 +245,8 @@ $(document).ready(function() {
                                 </div>
                                 {% endfor %}
                             {% endif %}
-                            <div class="weapon-slot ui-state-conten {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
+                            <div class="weapon-slot ui-state-content {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
+                            <div class="ui-state-content"><button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button></div>
                             </td>
                         </tr>
                     </tbody>
@@ -218,5 +277,6 @@ greg put team store here?
         {% endif %}
 
 
-<div id="name_dialog" title="Dialog Title" style="display:none"><input type="text" id="name_input"></input></div>
+        <div id="name_dialog" title="{%trans 'Change name'%}" style="display:none"><input type="text" id="name_input"></input></div>
+        <div id="purchase_dialog" title="{%trans 'Purchase equipment' %}" style="display:none"></div>
 {% endblock %}

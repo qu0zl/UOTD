@@ -1,0 +1,12 @@
+{% load i18n %}
+{% for weapon_list in unit.baseUnit.weaponLists.all %}
+<div class="ui-widget-content equip_select">
+    <select name="{{weapon_list.name}}" id="wl_{{weapon_list.id}}">
+    {% for item in weapon_list.weapons.all %}
+    <option value="{{item.id}}">{{item.name}}</option>
+    {% endfor %}
+</select>
+<button class="equip-button" value="{{unit.id}}_{{weapon_list.id}}">{% trans 'Buy' %}</button>
+<button class="equip-and-close-button" value="{{unit.id}}_{{weapon_list.id}}">{% trans 'Buy & Close' %}</button>
+</div>
+{% endfor %}
