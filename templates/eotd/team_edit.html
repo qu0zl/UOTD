@@ -82,7 +82,7 @@ $(document).ready(function() {
                     $("#purchase_dialog").dialog('close');
             },
             error: function(msg){
-                alert("{%trans 'Error' %}");
+                alert(msg.responseText);
             }
         });
         return false;

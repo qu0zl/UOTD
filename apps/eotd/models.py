@@ -2,12 +2,33 @@ from django.db import models
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 # no longer needed - from itertools import chain
 
 #import profiles.models
 
-# Create your models here.
+# tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
+class GameUnit(models.Model):
+    gameTeam = models.ForeignKey('GameTeam')
+    unit = models.ForeignKey('Unit')
+    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
 
+# tracks a single teams involvement in a game. What players did they have at the time, what points did they score etc.
+class GameTeam(models.Model):
+    game = models.ForeignKey('Game')
+    team = models.ForeignKey('Team')
+    victoryPoints = models.SmallIntegerField(default=0, blank=False)
+    earnings = models.SmallIntegerField(default=0, blank=False)
+    # units involved in this game
+    units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
+    def __unicode__(self):
+        return u"Game: Team, %s, VP, %s, Winnings, %s" % (self.team, self.victoryPoints, self.earnings)
+
+class Game(models.Model):
+    # Need to be able to support more than 2 teams
+    teams = models.ManyToManyField('Team', related_name='game_for_team', default=None, blank=True, through='GameTeam')
+
+# Create your models here.
 class CampaignApplicant(models.Model):
     user = models.ForeignKey(User)
     campaign = models.ForeignKey('Campaign')
@@ -20,10 +41,12 @@ class Campaign(models.Model):
     owner = models.ForeignKey(User, null=True, default=None, blank=False, editable=False, related_name="campaigns")
     description = models.TextField(max_length=800, blank=True)
     # owner will always have admin rights and cannot be removed, so admin table can be empty
-    admins = models.ManyToManyField(User, related_name='Campaign Admin Table', default=None, blank=True)
-    players = models.ManyToManyField(User, related_name='Campaign Player Table', default=None, blank=True)
-    teams = models.ManyToManyField('Team', related_name='Campaign Team Table', default=None, blank=True)
+    admins = models.ManyToManyField(User, related_name='campaign_admin_table', default=None, blank=True)
+    players = models.ManyToManyField(User, related_name='campaign_player_table', default=None, blank=True)
+    teams = models.ManyToManyField('Team', related_name='campaign_team_table', default=None, blank=True)
     coins = models.IntegerField(default=150)
+    # May teams involved in this campaign not be in any others?
+    exclusive = models.BooleanField(default=False)
     # secret key for campaign. Used to allow player to add themselves to the campaign.
     secret = models.CharField(max_length=40)
     applicants = models.ManyToManyField(User, default=None, through='CampaignApplicant', blank=True)
@@ -42,6 +65,20 @@ class Campaign(models.Model):
             return True
         else:
             return False
+    # checks if the user is a player OR the owner. Owner is considered a player automatically.
+    def isPlayer(self, user):
+        if user in self.players.all() or user == self.owner:
+            return True
+        return False
+    def addTeam(self, team):
+        if not self.isPlayer(team.owner):
+            raise PermissionDenied("Team owner is not a member of this campaign.")
+        if self.coins < team.value:
+            raise PermissionDenied("Team value is higher than that permitted to join this campaign.")
+        if self.exclusive and team.campaign_team_table.count() > 0:
+            raise PermissionDenied("This campaign does not allow a team to be in other campaigns. You must remove this team from any other campaigns in order to join.")
+        self.teams.add(team)
+        self.save()
 
 class CampaignForm(forms.ModelForm):
         class Meta:
@@ -85,6 +122,8 @@ WEAPON_STRENGTH_CHOICES = (
 class SkillList(models.Model):
     def __unicode__(self):
         return self.name
+    name = models.CharField(max_length=100)
+    skills = models.ManyToManyField('Skill', related_name='skill_lists', default=None, blank=False)
 
 # need to link this to unitTemplate
 # via a through model
@@ -190,8 +229,7 @@ class UnitTemplate(models.Model):
     bravado = models.SmallIntegerField(choices=STAT_CHOICES, default=4, blank=False)
     arcane = models.SmallIntegerField(choices=STAT_CHOICES, default=3, blank=False)
     weapons = models.ManyToManyField('Weapon', default=None, through='UnitTemplateWeapon', blank=True)
-#
-    #weapons somehow
+    skills = models.ManyToManyField('Skill', default=None, through='UnitTemplateSkill', blank=True)
 
 # modified from a 
 class Unit(models.Model):
@@ -213,23 +251,38 @@ class Unit(models.Model):
     # used for unit ordering in a team
     unitOrder = models.SmallIntegerField(default=999, blank=False)
 
+    def handsWorth(self):
+        hands = 0
+        # greg also check equipment...
+        for item in self.unitWeapons.all():
+            hands = hands + item.hands
+        return hands
     def allowedWeapon(self, weapon):
+        # check cost first
+        if weapon.cost > self.team.coins:
+            raise PermissionDenied("Cannot afford this item.")
+        if weapon.hands + self.handsWorth() > 4:
+            raise PermissionDenied("Cannot carry this many hands worth of equipment.")
+        #greg once you implement injuries check here to see if they can use 2 handed weapons...
+
+        # check if on one of our allowed weaponlists
         for aList in self.baseUnit.weaponLists.all():
             if weapon in aList.weapons.all():
                 # check for limitations on mediveal weapons
                 if weapon.medieval or not self.baseUnit.unittemplateweaponlist_set.get(unitTemplate=self.baseUnit, weaponLists=aList).medievalOnly:
                     return
-        raise Exception("Illegal weapon choice")
+                if not weapon.medieval and self.baseUnit.unittemplateweaponlist_set.get(unitTemplate=self.baseUnit, weaponLists=aList).medievalOnly:
+                    raise PermissionDenied("May only use medieval weapons.")
+        raise PermissionDenied("Illegal weapon choice")
 
-    def addWeapon(self, weapon):
-        try:
-            print 'allowedWeaponed says',self.allowedWeapon(weapon)
-            newWeapon = UnitWeapon(weapon=weapon, unit=self)
-            newWeapon.save()
-            return True
-        except Exception as e:
-            print 'Failed to add weapon', e
-            return False
+    def addWeapon(self, weapon_id):
+        weapon = Weapon.objects.get(id=weapon_id)
+        print 'allowedWeaponed says',self.allowedWeapon(weapon)
+        newWeapon = UnitWeapon(weapon=weapon, unit=self)
+        newWeapon.save()
+        self.team.coins = self.team.coins - weapon.cost
+        self.team.save()
+        return True
 
     @property
     def cost(self):
@@ -306,7 +359,6 @@ class Team(models.Model):
     def hasLeader(self):
         for item in self.units.all():
             if item.leader:
-                import pdb;pdb.set_trace()
                 return True
         return False
     def canHire(self, unitTemplate):
@@ -339,11 +391,17 @@ class Team(models.Model):
                 unit.save()
         except Exception as e:
             print 'greg big catch all. Remove.', e
+    @property
+    def value(self):
+        print 'greg, add a team.value function'
+        return 150
 
 class NewTeamForm(forms.ModelForm):
-        class Meta:
-            model = Team
-            fields = ['name', 'coins', 'faction', 'description']
+    campaignID = forms.IntegerField(label="", widget=forms.HiddenInput(), required=False)
+
+    class Meta:
+        model = Team
+        fields = ['name', 'coins', 'faction', 'description']
 
 class TeamForm(forms.ModelForm):
         class Meta:

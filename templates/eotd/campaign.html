@@ -84,7 +84,7 @@
                 <tbody>
                     {% for item in campaign.teams.all %}
                     <tr>
-                        <td><a href="/eotd/teams/{{item.id}}/">{{item.name}}</a></td>
+                        <td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
                         <td><a href="/profiles/profile/{{item.owner}}/">{{item.owner}}</a></td>
                         <td>{{item.coins}}</td>
                     </tr>
@@ -107,7 +107,7 @@
                         {% else %}
                         <tr>
                             <td> <button name="addTeam" type="button"><a href="/eotd/campaign/{{campaign_id}}/team/add/">{% trans "Add pre-existing team" %}</a></button> </td>
-                            <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/coins/{{campaign.coins}}/" >{% trans "Create new team for this campaign" %}</a></button> </td>
+                            <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/" >{% trans "Create new team for this campaign" %}</a></button> </td>
                         </tr>
                         {% endif %}
                     </tbody>

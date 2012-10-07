@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 import json
 from django.utils import simplejson
 from datetime import datetime
@@ -22,7 +22,7 @@ def campaignForm(request, campaign_id):
             form = eotd.models.CampaignForm(instance=campaign)
         except:
             return HttpResponseBadRequest(_('No such campaign id. It may have been deleted.'))
-        campaign_owner = campaign.owner.get()
+        campaign_owner = campaign.owner
     else:
         form = eotd.models.CampaignForm(initial = {"secret": "%s" % ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(16)) })
     return render_to_response('eotd/campaign.html', \
@@ -44,14 +44,14 @@ def campaignSave(request, campaign_id):
                 print 'trying to make new campaign' 
                 form = eotd.models.CampaignForm(request.POST) # A form bound to the POST data
                 campaign = form.save()
-                campaign.owner.add(request.user) 
+                campaign.owner=(request.user) 
                 campaign.save() 
                 print 'saved new campaign - %d' % campaign.id 
             else: 
                 campaign = eotd.models.Campaign.objects.get(id=campaign_id) 
                 # If the authenticated user is not the owner of this object then don't let them edit it! 
-                if (request.user != campaign.owner.get()):
-                    print 'Attempt by user %s to edit campaign owned by user %s' % (request.user, campaign.owner.get()) 
+                if (request.user != campaign.owner):
+                    print 'Attempt by user %s to edit campaign owned by user %s' % (request.user, campaign.owner) 
                     return HttpResponseForbidden() 
                 if 'delete' in request.POST: 
                     campaign.delete() 
@@ -113,6 +113,9 @@ def campaignJoinHandler( request, campaign_id ):
             return campaignJoin(request, campaign)
         if 'apply' in request.POST:
             return campaignApply(request, campaign)
+        if 'createTeam' in request.POST:
+            return teamNewForCampaign(request, campaign=campaign)
+    return HttpResponseBadRequest(_('Invalid campaign join attempt.'))
 
 def campaignApplicantList( request, campaign_id ):
     campaign = eotd.models.Campaign.objects.get(id=campaign_id)
@@ -163,9 +166,14 @@ def teamList( request ):
         }, \
         RequestContext(request))
 
-def teamNew(request):
+# If campaign is not None then this team is assigned to that campaign, if legal.
+def teamNewForCampaign(request, campaign=None):
+    try:
+        coins = campaign.coins
+    except:
+        coins = 150 # default size
     if request.user.is_authenticated():
-        form = eotd.models.NewTeamForm()
+        form = eotd.models.NewTeamForm(initial={'coins':coins, 'campaignID':campaign.id if campaign else 0})
         return render_to_response('eotd/team_new.html', \
             {
                 'formObject':form,
@@ -174,6 +182,9 @@ def teamNew(request):
     else:
         return HttpResponseForbidden(_('You must be logged in to create a new team.'))
         #return render_to_response('eotd/team_new.html', {}, RequestContext(request))
+
+def teamNew(request):
+    return teamNewArgs(request)
 
 
 def teamForm(request, team_id):
@@ -202,6 +213,14 @@ def newTeamSave(request):
         team = form.save() # save below after setting owner
         team.owner=request.user 
         team.save() 
+        try:
+            campaign = eotd.models.Campaign.objects.get(id=form.cleaned_data['campaignID'])
+            # greg use a clas method that checks for exclusivity etc, player member of this campaign, etc
+            campaign.addTeam(team)
+        except KeyError:
+            pass
+        except Exception as e:
+            print 'Exception adding this team to campaign.', e
         print 'saved new team - %d' % team.id 
         # New Team, so redirect to update the id in the user's URL bar
         return redirect('/eotd/team/%d/' % team.id)
@@ -215,7 +234,7 @@ def teamSave(request, team_id):
             team = eotd.models.Team.objects.get(id=team_id) 
             # If the authenticated user is not the owner of this object then don't let them edit it! 
             if (request.user != team.owner):
-                print 'Attempt by user %s to edit team owned by user %s' % (request.user, team.owner.get()) 
+                print 'Attempt by user %s to edit team owned by user %s' % (request.user, team.owner) 
                 return HttpResponseForbidden(_('You are not authorized to edit this team. Are you logged in correctly?') )
             if 'delete' in request.POST: 
                 team.delete() 
@@ -237,7 +256,7 @@ def teamHire(request, team_id, unit_id):
             team = eotd.models.Team.objects.get(id=team_id)
             unitTemplate = eotd.models.UnitTemplate.objects.get(id=unit_id)
             if (request.user != team.owner):
-                print 'Attempt by user %s to edit team owned by user %s' % (request.user, team.owner.get())
+                print 'Attempt by user %s to edit team owned by user %s' % (request.user, team.owner)
                 return HttpResponseForbidden(_('You are not authorized to edit this team. Are you logged in correctly?') )
             try:
                 coins = team.hire(unitTemplate)
@@ -325,7 +344,7 @@ def unitBuyHTML(request, unit_id, item_id):
         if request.is_ajax() and request.user.is_authenticated():
             unit = eotd.models.Unit.objects.get(id=unit_id)
             if request.user == unit.team.owner:
-                # greg unit.buy(item_id)
+                unit.addWeapon(item_id)
                 unit.save()
                 return render_to_response('eotd/unit_equipment.html', \
                     {
@@ -334,6 +353,8 @@ def unitBuyHTML(request, unit_id, item_id):
                     RequestContext(request))
             else:
                 return HttpResponseBadRequest(_('User unauthorised.'))
+    except PermissionDenied as e:
+        return HttpResponseBadRequest(_(str(e)))
     except Exception as e:
-        print 'unitName Exception', e
+        print 'unitBuyHtml Exception', e
         return HttpResponseBadRequest(_('Error purchasing equipment. Please retry.'))
