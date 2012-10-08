@@ -178,13 +178,27 @@ $(document).ready(function() {
 
 {% load ifsetting_tag %}
 
-{% block head_title %}{% trans "Edit Team" %}{% endblock %}
+{% block head_title %}
+
+{% if edit %}
+{% trans "Edit Team" %}
+{% else %}
+{% trans "View Team" %}
+{% endif %}
+{% endblock %}
 
 {% block body %}
-        {% if user.is_authenticated and request.user == team.owner %}
-        <form method="post" id="formObject" action="/eotd/team/{{team.id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
+    <form method="post" id="formObject" action="/eotd/team/{{team.id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
         {{ formset.management_form }}
+        <div style="float:left; display:inline-block;">
+        {% if edit %}
         <h1>{% trans "Edit team"%}</h1>
+        {% else %}
+        <h1>{% trans "View team"%}</h1>
+        </div>
+        {% endif %}
+        <div style="float:right; display:inline-block;"><a class="link" href="/eotd/team/{{team.id}}/print/">Print view</a></div>
+
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
                 <table class="ui-widget-header">
@@ -206,6 +220,7 @@ $(document).ready(function() {
             </div>
         </div>
 
+        {% if edit %}
         <div style="width=100%; display:block; clear:both;">
             <table>
                 <tbody>
@@ -215,6 +230,7 @@ $(document).ready(function() {
                 </tbody>
             </table>
         </div>
+        {% endif %}
     </form>
 
         <div style="width=100%; display:block; clear:both;">
@@ -257,6 +273,7 @@ $(document).ready(function() {
         <div style="width=100%; display:block; clear:both;">
 greg put team store here?
         </div>
+        {% if edit %}
         <div style="width=100%; display:block; clear:both;">
             <table class="ui-widget">
                 <thead class="ui-widget-header">
@@ -271,11 +288,7 @@ greg put team store here?
                 </tbody>
             </table>
         </div>
-
-        {% else %}
-        <h1>{% trans "You are not authorized to edit this team."%}</h1>
         {% endif %}
-
 
         <div id="name_dialog" title="{%trans 'Change name'%}" style="display:none"><input type="text" id="name_input"></input></div>
         <div id="purchase_dialog" title="{%trans 'Purchase equipment' %}" style="display:none"></div>

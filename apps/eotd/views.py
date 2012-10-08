@@ -16,10 +16,12 @@ import eotd.models
 def campaignForm(request, campaign_id):
     campaign_owner = None
     campaign = None
+    gameForm = None
     if ( campaign_id != "0" ):
         try:
             campaign = eotd.models.Campaign.objects.get(id=campaign_id)
             form = eotd.models.CampaignForm(instance=campaign)
+            gameForm = eotd.models.GameForm(campaign=campaign)
         except:
             return HttpResponseBadRequest(_('No such campaign id. It may have been deleted.'))
         campaign_owner = campaign.owner
@@ -29,8 +31,9 @@ def campaignForm(request, campaign_id):
         {
             'campaign':campaign,
             'campaign_id':campaign_id,
-            'campaign_owner':campaign_owner,
-            'formObject':form
+            'edit':campaign_id == "0" or (request.user.is_authenticated() and campaign.isAdmin(request.user)),
+            'formObject':form,
+            'gameForm':gameForm
         }, \
         RequestContext(request))
 
@@ -70,6 +73,33 @@ def campaignSave(request, campaign_id):
         return redirect('/eotd/campaign/%d/' % campaign.id)
     else:
         return campaignForm(request, campaign_id)
+
+
+def campaignGame(request, campaign_id):
+    try:
+        if request.user.is_authenticated() and request.method == 'POST':
+            campaign = eotd.models.Campaign.objects.get(id=campaign_id)
+            if campaign.isAdmin(request.user):
+                teams = request.POST.getlist('teams') + request.POST.getlist('teamTwo')
+                date_parts=request.POST['date'].split('/')
+                date="%s-%s-%s" % (date_parts[2], date_parts[0], date_parts[1])
+                game = eotd.models.Game(date=date, campaign=campaign)
+                game.save() # Need id before accessing M2M fields
+                try:
+                    for item in teams:
+                        team = eotd.models.Team.objects.get(id=item)
+                        gameTeam = eotd.models.GameTeam(game=game, team=team)
+                        gameTeam.save()
+                except Exception as e:
+                    # don't leave the failed game hanging around
+                    game.delete() # greg on delete clean up any GameTeam objects pointing to this.
+                return redirect('/eotd/campaign/%s/' % campaign_id)
+            else:
+                print request.user
+                return HttpResponseBadRequest(_('Not an admin of this campaign.'))
+    except Exception as e:
+        print 'campaignGame Exception', e
+        return HttpResponseBadRequest(_('Failed to add game.'))
 
 def campaignList( request ):
     campaigns = eotd.models.Campaign.objects.order_by('name')
@@ -166,6 +196,14 @@ def teamList( request ):
         }, \
         RequestContext(request))
 
+def teamPrint( request, team_id ):
+    team = eotd.models.Team.objects.get(id=team_id)
+    return render_to_response('eotd/team_print.html', \
+        {
+            'team':team,
+        }, \
+        RequestContext(request))
+
 # If campaign is not None then this team is assigned to that campaign, if legal.
 def teamNewForCampaign(request, campaign=None):
     try:
@@ -184,8 +222,7 @@ def teamNewForCampaign(request, campaign=None):
         #return render_to_response('eotd/team_new.html', {}, RequestContext(request))
 
 def teamNew(request):
-    return teamNewArgs(request)
-
+    return teamNewForCampaign(request, campaign=None)
 
 def teamForm(request, team_id):
     team_owner = None
@@ -201,7 +238,8 @@ def teamForm(request, team_id):
             'team':team,
             'team_id':team_id,
             'team_owner':team_owner,
-            'formObject':form
+            'formObject':form,
+            'edit': request.user.is_authenticated() and request.user == team.owner
         }, \
         RequestContext(request))
 

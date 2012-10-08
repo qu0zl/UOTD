@@ -3,30 +3,11 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+import datetime
 # no longer needed - from itertools import chain
 
 #import profiles.models
 
-# tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
-class GameUnit(models.Model):
-    gameTeam = models.ForeignKey('GameTeam')
-    unit = models.ForeignKey('Unit')
-    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
-
-# tracks a single teams involvement in a game. What players did they have at the time, what points did they score etc.
-class GameTeam(models.Model):
-    game = models.ForeignKey('Game')
-    team = models.ForeignKey('Team')
-    victoryPoints = models.SmallIntegerField(default=0, blank=False)
-    earnings = models.SmallIntegerField(default=0, blank=False)
-    # units involved in this game
-    units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
-    def __unicode__(self):
-        return u"Game: Team, %s, VP, %s, Winnings, %s" % (self.team, self.victoryPoints, self.earnings)
-
-class Game(models.Model):
-    # Need to be able to support more than 2 teams
-    teams = models.ManyToManyField('Team', related_name='game_for_team', default=None, blank=True, through='GameTeam')
 
 # Create your models here.
 class CampaignApplicant(models.Model):
@@ -59,9 +40,9 @@ class Campaign(models.Model):
     def __unicode__(self):
         return u"%s:%s" % (self.id, self.name)
 
-    def is_admin(self, user):
-        print 'user is: %s, owner is %s' % (user, self.owner.get())
-        if user == self.owner.get() or user in self.admins.all():
+    def isAdmin(self, user):
+        print 'user is: %s, owner is %s' % (user, self.owner)
+        if user == self.owner or user in self.admins.all():
             return True
         else:
             return False
@@ -187,6 +168,13 @@ class UnitTemplateWeapon(models.Model):
     weapon = models.ForeignKey('Weapon')
     unitTemplate = models.ForeignKey('UnitTemplate')
 
+class UnitTemplateSkillList(models.Model):
+    # Do you need some special circumstance to be allowed use this skill-list?
+    # EG a good roll on the skill table
+    special = models.BooleanField(default=False)
+    skillLists = models.ForeignKey('SkillList')
+    unitTemplate = models.ForeignKey('UnitTemplate')
+
 class UnitTemplateWeaponList(models.Model):
     medievalOnly = models.BooleanField(default=False)
     weaponLists = models.ForeignKey('WeaponList')
@@ -211,6 +199,7 @@ class UnitTemplate(models.Model):
     faction = models.ManyToManyField(Faction, related_name='unit_templates', default=None, blank=False)
     name = models.CharField(max_length=100)
     weaponLists = models.ManyToManyField(WeaponList, related_name='unit_template_weaponlists', default=None, blank=False, through='UnitTemplateWeaponList')
+    skillLists = models.ManyToManyField(SkillList, related_name='unit_template_skilllists', default=None, blank=False, through='UnitTemplateSkillList')
     supernatural = models.BooleanField(default=False)
     # If maxCount > 0 then that is the maximum number of that unitType in a faction
     maxCount = models.SmallIntegerField(default=0, blank=False)
@@ -340,6 +329,9 @@ class Unit(models.Model):
     def weapons(self):
         return self.baseUnit.weapons.all() | self.unitWeapons.all()
     @property
+    def skills(self):
+        return self.baseUnit.skills.all()
+    @property
     def baseWeapons(self):
         return self.baseUnit.weapons.all()
     @property
@@ -393,8 +385,11 @@ class Team(models.Model):
             print 'greg big catch all. Remove.', e
     @property
     def value(self):
-        print 'greg, add a team.value function'
-        return 150
+        cost = self.coins
+        for unit in self.units.all():
+            cost = cost + unit.cost
+        print 'greg modify team value to include stored equipment'
+        return cost
 
 class NewTeamForm(forms.ModelForm):
     campaignID = forms.IntegerField(label="", widget=forms.HiddenInput(), required=False)
@@ -407,4 +402,41 @@ class TeamForm(forms.ModelForm):
         class Meta:
             model = Team
             fields = ['name', 'description']
+
+class Game(models.Model):
+    # Need to be able to support more than 2 teams
+    teams = models.ManyToManyField('Team', related_name='game_for_team', default=None, blank=True, through='GameTeam')
+    date = models.DateField(_("Date"),default=datetime.date.today)
+    campaign = models.ForeignKey('Campaign', related_name='games', null=True, default=None)
+
+class GameForm(forms.ModelForm):
+    teamTwo = forms.ModelMultipleChoiceField(queryset=Team.objects.all())
+    def __init__(self, campaign, *args, **kwargs):
+        super(GameForm, self).__init__(*args, **kwargs)
+        self.fields['teams'].queryset = campaign.teams.all()
+        self.fields['teamTwo'].queryset = campaign.teams.all()
+
+    class Meta:
+        model = Game
+        widgets = {
+            'date': forms.DateInput(format='%m/%d/%Y'),
+        }
+
+# tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
+class GameUnit(models.Model):
+    gameTeam = models.ForeignKey('GameTeam')
+    unit = models.ForeignKey('Unit')
+    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
+
+# tracks a single teams involvement in a game. What players did they have at the time, what points did they score etc.
+class GameTeam(models.Model):
+    game = models.ForeignKey('Game')
+    team = models.ForeignKey('Team')
+    victoryPoints = models.SmallIntegerField(default=0, blank=False)
+    earnings = models.SmallIntegerField(default=0, blank=False)
+    # units involved in this game
+    units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
+    def __unicode__(self):
+        return u"Team: %s, VP: %s, Winnings: %s" % (self.team, self.victoryPoints, self.earnings)
+
 

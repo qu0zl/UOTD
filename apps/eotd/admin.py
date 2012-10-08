@@ -1,14 +1,20 @@
 from django.contrib import admin
-from eotd.models import Campaign, Unit, UnitTemplate, Team, Faction, Weapon, UnitTemplateWeapon, UnitTemplateWeaponList, UnitWeapon, WeaponList, Skill, SkillList
+from eotd.models import Campaign, Unit, UnitTemplate, Team, Faction, Weapon, UnitTemplateWeapon, UnitTemplateSkill, UnitTemplateWeaponList, UnitTemplateSkillList, UnitTemplateSkill, UnitWeapon, WeaponList, Skill, SkillList
 
 class UnitTemplateWeaponInline(admin.TabularInline):
     model = UnitTemplateWeapon
     extra = 1
+class UnitTemplateSkillInline(admin.TabularInline):
+    model = UnitTemplateSkill
+    extra = 1
 class UnitTemplateWeaponListInline(admin.TabularInline):
     model = UnitTemplateWeaponList
     extra = 1
+class UnitTemplateSkillListInline(admin.TabularInline):
+    model = UnitTemplateSkillList
+    extra = 1
 class UnitTemplateAdmin(admin.ModelAdmin):
-    inlines = (UnitTemplateWeaponInline, UnitTemplateWeaponListInline)
+    inlines = (UnitTemplateWeaponInline, UnitTemplateSkillInline, UnitTemplateWeaponListInline, UnitTemplateSkillListInline)
 
 # If I wanted both ends of the template weapon manytomany to be able to be editable in the admin interface
 # then I would also define and register the below admin class

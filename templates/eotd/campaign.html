@@ -4,11 +4,20 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.2.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.24.custom.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $( "#id_date" ).datepicker();
+    });
+</script>
 {% endblock extra_head %}
 
 {% load ifsetting_tag %}
 
-{% block head_title %}{% trans "Edit Campaign" %}{% endblock %}
+{% block head_title %}{% trans "Campaign" %}{% endblock %}
 
 {% block body %}
     <form method="post" id="formObject" action="/eotd/campaign/{{campaign_id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
@@ -18,11 +27,11 @@
                     <tr>
                     {% if campaign_id == '0' %}
                         <td><h1>{% trans "Create new campaign"%}</h1></td><td>{{formObject.name}}</td></tr>
-                        {% else %}
-                        {% if user.is_authenticated and request.user == campaign_owner %}
+                    {% else %}
+                        {% if edit %}
                             <td><h1>{% trans "Edit campaign"%}</h1></td><td>{{formObject.name}}</td>
                         {% else %}
-                        <td><h1>{% trans "View campaign"%}</h1></td><td>{{formObject.name.value}}</td>
+                            <td><h1>{% trans "View campaign"%}</h1></td><td>{{formObject.name.value}}</td>
                         {% endif %}
                     {% endif %}
                     </tr>
@@ -36,7 +45,7 @@
             <div class="leftDouble">
                 <table>
                     <tbody>
-                        {% if campaign_id == '0' or user.is_authenticated and request.user == campaign_owner %}
+                        {% if campaign_id == '0' or edit %}
                         <tr><td>{{formObject.secret.label}}</td><td>{{formObject.secret}}</td></tr>
                         {% endif %}
                         <tr><td>{{formObject.coins.label}}</td><td>{{formObject.coins}}</td></tr>
@@ -53,7 +62,7 @@
             </div>
         </div>
 
-        {% if campaign_id == '0' or user.is_authenticated and request.user == campaign_owner %}
+        {% if campaign_id == '0' or edit %}
         <div style="width=100%; display:block; clear:both;">
             <table>
                 <tbody>
@@ -110,6 +119,42 @@
                             <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/" >{% trans "Create new team for this campaign" %}</a></button> </td>
                         </tr>
                         {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if campaign_id != '0' %}
+            <form method="post" id="deleteGame" action="/eotd/game/delete/" enctype="multipart/form-data"> {% csrf_token %}
+                <div style="width=100%; display:block; clear:both;">
+                    <table>
+                        <tbody>
+                            {% for game in campaign.games.all %}
+                            <tr>
+                                <td>{{game.date}}</td>
+                                {% for team in game.teams.all %}
+                                <td>{{team}}</td>
+                                {% endfor %}
+                                <td><button name="deleteGame" type="submit">{% trans "Delete game" %}</button> </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        {% endif %}
+        {% if campaign_id != '0' and edit %}
+        <form method="post" id="addGame" action="/eotd/campaign/{{campaign_id}}/game/" enctype="multipart/form-data"> {% csrf_token %}
+            <div style="width=100%; display:block; clear:both;">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>{{gameForm.teams}}</td>
+                            <td>{{gameForm.teamTwo}}</td>
+                            <td>{{gameForm.date}}</td>
+                            <td><button name="addGame" type="submit">{% trans "Add game" %}</button> </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

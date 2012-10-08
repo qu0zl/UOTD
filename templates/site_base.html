@@ -6,8 +6,10 @@
 {% block nav %}
     <ul>{% spaceless %}
         <li><a href="/eotd/campaign/">{% trans "View Campaigns" %}</a></li>
+        <li><a href="/eotd/team/">{% trans "View Teams" %}</a></li>
         {% if user.is_authenticated %}
             <li><a href="/eotd/campaign/0/">{% trans "New Campaign" %}</a></li>
+            <li><a href="/eotd/team/0/">{% trans "New Team" %}</a></li>
             <li id="tab_profile"><a href="{% url profile_detail user.username %}">{% trans "Profile" %}</a></li>
             <li id="tab_notices"><a href="{% url notification_notices %}">{% trans "Notices" %}{% if notice_unseen_count %} ({{ notice_unseen_count }}){% endif %}</a></li>
         {% endif %}

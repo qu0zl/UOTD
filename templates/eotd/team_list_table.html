@@ -2,6 +2,7 @@
 {% for item in teams %}
     <tr><td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
         <td>{{item.owner}}</td>
-        <td>{{item.getCost}}</td>
+        <td>{{item.faction}}</td>
+        <td>{{item.value}}</td>
     </tr>
     {% endfor %}
