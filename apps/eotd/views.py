@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.forms.formsets import formset_factory
 import json
 from django.utils import simplejson
 from datetime import datetime
@@ -12,7 +13,6 @@ import eotd.models
 
 # Create your views here.
 
-
 def campaignForm(request, campaign_id):
     campaign_owner = None
     campaign = None
@@ -21,7 +21,7 @@ def campaignForm(request, campaign_id):
         try:
             campaign = eotd.models.Campaign.objects.get(id=campaign_id)
             form = eotd.models.CampaignForm(instance=campaign)
-            gameForm = eotd.models.GameForm(campaign=campaign)
+            gameForm = eotd.models.NewGameForm(campaign=campaign)
         except:
             return HttpResponseBadRequest(_('No such campaign id. It may have been deleted.'))
         campaign_owner = campaign.owner
@@ -396,3 +396,75 @@ def unitBuyHTML(request, unit_id, item_id):
     except Exception as e:
         print 'unitBuyHtml Exception', e
         return HttpResponseBadRequest(_('Error purchasing equipment. Please retry.'))
+
+def gameForm(request, game_id):
+    try:
+        game = eotd.models.Game.objects.get(id=game_id)
+        teams = []
+        units = []
+        for item in game.gameteam_set.all():
+            teams.append( eotd.models.GameFormLine( initial = {
+                "team":item.team, "earnings":item.earnings, "victoryPoints":item.victoryPoints, "teamID":item.team.id}))
+            inner = []
+            for unit in item.gameunit_set.all():
+                # greg need to modify below unit.skills.get to .all() if we move to multiple skills per game
+                line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
+                    "name":unit.unit.name, "skills":unit.skills.get() if unit.skills.count()>0 else None, "injuries":unit.injuries, "summary":unit.unit.gearAsString} )
+                inner.append( line)
+            units.append(inner)
+        # greg confirm what happens with a logged out user calling canEdit below?
+        return render_to_response('eotd/game.html', \
+            {
+                'game':game,
+                'teams':teams,
+                'unitArray':units,
+                'edit':game.canEdit(request.user)
+                }, \
+            RequestContext(request))
+    except Exception as e:
+        print 'gameForm exception: ', e
+        return HttpResponseBadRequest(_('Error viewing game. Please retry.'))
+
+def gameUpdate(request, game_id):
+    try:
+        if request.user.is_authenticated() and request.method == 'POST':
+            game = eotd.models.Game.objects.get(id=game_id)
+
+            if not game.canEdit(request.user):
+                return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
+            team = eotd.models.Team.objects.get(id=int(request.POST['save']))
+            gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
+            gameTeam.earnings = request.POST['earnings']
+            gameTeam.victoryPoints = request.POST['victoryPoints']
+            gameTeam.save()
+            # Freeze the list of units used by this team in this game
+            gameTeam.freezeUnits()
+            return redirect('/eotd/game/%s/' % game_id)
+    except Exception as e:
+        print 'gameUpdate Exception', e
+        return HttpResponseBadRequest(_('Failed to update game.'))
+
+
+def gameUnits(request, game_id):
+    try:
+        if request.user.is_authenticated() and request.method == 'POST':
+            game = eotd.models.Game.objects.get(id=game_id)
+
+            if not game.canEdit(request.user):
+                return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
+            print request.POST # greg remove
+            #team = eotd.models.Team.objects.get(id=int(request.POST['update']))
+            #gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
+            for item in request.POST:
+                if item.endswith('-skills'):
+                    prefix=item.split('-')[0]
+                    gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
+                    gameUnit.skills = request.POST[item]
+                    gameUnit.injuries = request.POST['%s-injuries' % prefix]
+                    gameUnit.save()
+                    #greg check this user can edit this gameUnit somehow
+            return redirect('/eotd/game/%s/' % game_id)
+    except Exception as e:
+        print 'gameUnits Exception', e
+        return HttpResponseBadRequest(_('Failed to update game.'))
+
