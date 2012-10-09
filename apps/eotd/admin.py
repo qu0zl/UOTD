@@ -1,5 +1,5 @@
 from django.contrib import admin
-from eotd.models import Campaign, Unit, UnitTemplate, Team, Faction, Weapon, UnitTemplateWeapon, UnitTemplateSkill, UnitTemplateWeaponList, UnitTemplateSkillList, UnitTemplateSkill, UnitWeapon, WeaponList, Skill, SkillList
+from eotd.models import Campaign, Unit, UnitTemplate, Team, Faction, Weapon, UnitTemplateWeapon, UnitTemplateSkill, UnitTemplateWeaponList, UnitTemplateSkillList, UnitTemplateSkill, UnitWeapon, WeaponList, Skill, SkillList, Injury
 
 class UnitTemplateWeaponInline(admin.TabularInline):
     model = UnitTemplateWeapon
@@ -45,3 +45,5 @@ admin.site.register(Weapon)
 admin.site.register(WeaponList)
 admin.site.register(Skill)
 admin.site.register(SkillList)
+admin.site.register(Injury)
+

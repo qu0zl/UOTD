@@ -5,8 +5,6 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
 <link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />
-<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.8.2.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.24.custom.min.js"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -134,8 +132,9 @@
                             <tr>
                                 <td>{{game.date}}</td>
                                 {% for team in game.teams.all %}
-                                <td>{{team}}</td>
+                                <td><a href="/eotd/team/{{team.id}}/">{{team}}</a></td>
                                 {% endfor %}
+                                <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
                                 <td><button name="deleteGame" type="submit">{% trans "Delete game" %}</button> </td>
                             </tr>
                             {% endfor %}

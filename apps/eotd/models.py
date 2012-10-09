@@ -113,6 +113,11 @@ class WeaponList(models.Model):
         return self.name
     name = models.CharField(max_length=100)
     weapons = models.ManyToManyField('Weapon', related_name='weapon_lists', default=None, blank=False)
+
+class Injury(models.Model):
+    def __unicode__(self):
+        return self.name
+    name = models.CharField(max_length=100)
         
 class Skill(models.Model):
     def __unicode__(self):
@@ -337,6 +342,20 @@ class Unit(models.Model):
     @property
     def boughtWeapons(self):
         return self.unitWeapons.all()
+    @property
+    def gearAsString(self):
+        rv =""
+        for item in self.skills:
+            if len(rv) > 0:
+                rv = "%s, %s" % (rv, item)
+            else:
+                rv = rv + item.name
+        for item in self.weapons:
+            if len(rv) > 0:
+                rv = "%s, %s" % (rv, item)
+            else:
+                rv = rv + item.name
+        return rv
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -408,11 +427,19 @@ class Game(models.Model):
     teams = models.ManyToManyField('Team', related_name='game_for_team', default=None, blank=True, through='GameTeam')
     date = models.DateField(_("Date"),default=datetime.date.today)
     campaign = models.ForeignKey('Campaign', related_name='games', null=True, default=None)
+    def canEdit(self, user):
+        if user:
+            for team in self.teams.all():
+                if user == team.owner:
+                    return True
+            if user == self.campaign.owner:
+                return True
+        return False
 
-class GameForm(forms.ModelForm):
+class NewGameForm(forms.ModelForm):
     teamTwo = forms.ModelMultipleChoiceField(queryset=Team.objects.all())
     def __init__(self, campaign, *args, **kwargs):
-        super(GameForm, self).__init__(*args, **kwargs)
+        super(NewGameForm, self).__init__(*args, **kwargs)
         self.fields['teams'].queryset = campaign.teams.all()
         self.fields['teamTwo'].queryset = campaign.teams.all()
 
@@ -422,21 +449,58 @@ class GameForm(forms.ModelForm):
             'date': forms.DateInput(format='%m/%d/%Y'),
         }
 
-# tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
-class GameUnit(models.Model):
-    gameTeam = models.ForeignKey('GameTeam')
-    unit = models.ForeignKey('Unit')
-    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
-
 # tracks a single teams involvement in a game. What players did they have at the time, what points did they score etc.
 class GameTeam(models.Model):
-    game = models.ForeignKey('Game')
+    game = models.ForeignKey('Game', related_name="gameteam_set")
     team = models.ForeignKey('Team')
     victoryPoints = models.SmallIntegerField(default=0, blank=False)
     earnings = models.SmallIntegerField(default=0, blank=False)
     # units involved in this game
     units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
+    # copies the units currently in the team into the 'units' field.
+    # This is only performed the first time this method is called so that any later changes to team roster
+    # will not then be reflected into this game if the game is updated.
+    def freezeUnits(self):
+        if self.units.count()>0:
+            return
+        for item in self.team.units.all():
+            gameUnit = GameUnit(gameTeam=self, unit=item)
+            gameUnit.save()
+        self.save()
+
     def __unicode__(self):
         return u"Team: %s, VP: %s, Winnings: %s" % (self.team, self.victoryPoints, self.earnings)
 
+# tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
+class GameUnit(models.Model):
+    gameTeam = models.ForeignKey(GameTeam)
+    unit = models.ForeignKey('Unit')
+    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
+    injuries = models.ManyToManyField('Injury', related_name='game_unit_for_injury', default=None, blank=True)
+    def __unicode__(self):
+        return u"%s" % self.unit.name
 
+class GameUnitLine(forms.Form):
+    # greg the below does not work for me, it produces
+    # gameForm exception:  Caught TypeError while rendering: 'ManyRelatedManager' object is not iterable
+    # I need ModelMultipleChoiceField to be able to add multiple skills to a model in a single game
+    # However, I'm leaving this for now. I'm beginning to wonder if this is a django regression.
+    #skills = forms.ModelMultipleChoiceField(queryset=Skill.objects.all(), widget=forms.CheckboxSelectMultiple())
+    skills = forms.ModelChoiceField(Skill.objects.all())
+    injuries = forms.ModelChoiceField(Injury.objects.all())
+    name = forms.CharField()
+    summary = forms.CharField()
+
+class GameFormLine(forms.ModelForm):
+    team = forms.CharField()
+    teamID = forms.IntegerField(widget=forms.widgets.HiddenInput())
+
+    class Meta:
+        model = GameTeam
+        fields = ['team','victoryPoints','earnings']
+
+#class GameFormLine(forms.Form):
+#    team = forms.CharField()
+#    victoryPoints = forms.IntegerField()
+#    earnings = forms.IntegerField()
+#    teamID = forms.IntegerField(widget=forms.widgets.HiddenInput())
