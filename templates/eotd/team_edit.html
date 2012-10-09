@@ -6,7 +6,6 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
 <link rel="stylesheet" href="{{ STATIC_URL }}css/team_edit_1.0.0.css">
-<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />  
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
 <style>
     .weapon { display:inline-block;float:left;margin:1px;padding-left:4px;padding-right:4px;min-height:22px;}
@@ -31,7 +30,6 @@ $(document).ready(function() {
         }
     });
     $( "input:submit, .link, button" ).button();
-// greg remove     $('.weapon-slot').click(function(){alert("greg");});
 
     $(".bought-weapon" ).draggable({ revert: "invalid",
         start: function(event, ui) {
