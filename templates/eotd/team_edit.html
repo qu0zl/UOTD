@@ -200,7 +200,7 @@ $(document).ready(function() {
                 <table class="ui-widget-header">
                     <tbody class="ui-widget-content">
                         <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
-                        <tr><td>{% trans 'Standing' %}</td><td></td></tr>
+                        <tr><td>{% trans 'Standing' %}</td><td>{{team.value}}</td></tr>
                         <tr><td>{% trans 'Coins' %}</td><td>{{team.coins}}</td></tr>
                         <tr><td>{% trans 'Faction' %}</td><td>{{team.faction}}</td></tr>
                     </tbody>
