@@ -236,9 +236,17 @@ def teamForm(request, team_id):
     return render_to_response('eotd/team_edit.html', \
         {
             'team':team,
-            'team_id':team_id,
-            'team_owner':team_owner,
             'formObject':form,
+            'edit': request.user.is_authenticated() and request.user == team.owner
+        }, \
+        RequestContext(request))
+
+def teamInnerForm(request, team_id):
+    print 'greg, teamInnerForm'
+    team = eotd.models.Team.objects.get(id=team_id)
+    return render_to_response('eotd/team_inner.html', \
+        {
+            'team':team,
             'edit': request.user.is_authenticated() and request.user == team.owner
         }, \
         RequestContext(request))
@@ -343,19 +351,52 @@ def unitName(request, unit_id):
         print 'unitName Exception', e
         return HttpResponseBadRequest(_('Failed to update name'))
 
-def weaponMove(request):
+# team_id is necessary when moving a store item as we don't have a unit to deduce team from
+def weaponMove(request, team_id):
     try:
         if request.is_ajax() and request.user.is_authenticated():
-            fromUnit = eotd.models.Unit.objects.get(id=request.POST['from'])
-            toUnit = eotd.models.Unit.objects.get(id=request.POST['to'])
-            weaponEntry = eotd.models.UnitWeapon.objects.filter(unit=fromUnit, weapon__id=request.POST['weapon'])[0]
-            if fromUnit.team.owner != request.user:
+            store=False
+            if request.POST['from']=='store':
+                fromUnit = None
+            else:
+                fromUnit = eotd.models.Unit.objects.get(id=request.POST['from'])
+            if request.POST['to']=='sell':
+                toUnit = None
+            elif request.POST['to']=='store':
+                toUnit = None
+                store=True
+            else:
+                toUnit = eotd.models.Unit.objects.get(id=request.POST['to'])
+            weaponEntry = eotd.models.UnitWeapon.objects.filter(unit=fromUnit, weapon__id=request.POST['weapon'])
+            # If it's a store item then ensure it's one belonging to this team.
+            if not fromUnit:
+                team = eotd.models.Team.objects.get(id=team_id)
+                weaponEntry = weaponEntry.filter(team=team)[0]
+            else:
+                team = fromUnit.team
+                weaponEntry = weaponEntry.all()[0]
+
+            if team.owner != request.user:
                 raise Exception("Unauthorized attempt to edit team.")
-            if fromUnit.team != toUnit.team:
+            if (toUnit and team != toUnit.team) or (store and fromUnit.team!=team):
                 raise Exception("Units are not on the same team.")
-            toUnit.allowedWeapon(weaponEntry.weapon) # will raise exception if illegal
-            weaponEntry.unit=toUnit
-            weaponEntry.save()
+            # sale
+            if not toUnit and not store:
+                # greg logic to handle pawn depreciation
+                team.coins = team.coins + weaponEntry.weapon.cost
+                team.save()
+                weaponEntry.delete()
+            # store
+            elif not toUnit:
+                weaponEntry.team = team
+                weaponEntry.unit = None
+                weaponEntry.save()
+            # move    
+            else:
+                toUnit.allowedWeapon(weaponEntry.weapon) # will raise exception if illegal
+                weaponEntry.unit=toUnit
+                weaponEntry.team = None
+                weaponEntry.save()
         else:
             return HttpResponseBadRequest(_('User unauthorised.'))
     except Exception as e:
@@ -434,9 +475,13 @@ def gameUpdate(request, game_id):
                 return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
             team = eotd.models.Team.objects.get(id=int(request.POST['save']))
             gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
-            gameTeam.earnings = request.POST['earnings']
+            oldEarnings = gameTeam.earnings
+            gameTeam.earnings = int(request.POST['earnings'])
+            earningsDiff = gameTeam.earnings - oldEarnings
             gameTeam.victoryPoints = request.POST['victoryPoints']
             gameTeam.save()
+            team.coins = team.coins+earningsDiff
+            team.save()
             # Freeze the list of units used by this team in this game
             gameTeam.freezeUnits()
             return redirect('/eotd/game/%s/' % game_id)
@@ -468,3 +513,16 @@ def gameUnits(request, game_id):
         print 'gameUnits Exception', e
         return HttpResponseBadRequest(_('Failed to update game.'))
 
+def gameDelete(request, game_id):
+    try:
+        if request.user.is_authenticated():
+            game = eotd.models.Game.objects.get(id=game_id)
+            campaign = game.campaign
+
+            if campaign.isAdmin(request.user):
+                game.delete()
+                return redirect('/eotd/campaign/%s/' % campaign.id)
+        return HttpResponseBadRequest(_('You are not authorized to delete this game.'))
+    except Exception as e:
+        print 'gameDelete Exception', e
+        return HttpResponseBadRequest(_('Failed to delete game.'))

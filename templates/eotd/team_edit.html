@@ -10,6 +10,8 @@
 <style>
     .weapon { display:inline-block;float:left;margin:1px;padding-left:4px;padding-right:4px;min-height:22px;}
     .weapon-slot { width:100px; display:inline-block;float:left;margin:1px; min-height:18px;}
+    .pawn-slot { width:25%; display:inline-block;float:left;margin:10px; min-height:80px;}
+    .store-slot { width:50%; display:inline-block;float:right;margin:10px; min-height:80px;}
     .weapon_row { padding:1px 8px 1px; }
     .equip_select { display:inline-block;float:left;margin:1px; }
 </style>
@@ -29,40 +31,68 @@ $(document).ready(function() {
             }
         }
     });
-    $( "input:submit, .link, button" ).button();
+    function dynamic_elements(){
+        $( "input:submit, .link, button" ).button();
 
-    $(".bought-weapon" ).draggable({ revert: "invalid",
-        start: function(event, ui) {
-        $(this).data('startPosition', ui.position);
-        },
-    });
-    $(".weapon-slot" ).droppable({activeClass: "ui-state-hover",
-        drop: function(event, ui) { 
-            var source = ui.draggable.attr("id").split('_');
-            var fromUnit = source[0];
-            var weapon = source[1]
-            var toUnit = $(this).attr("id").split('_')[1]
-            $.ajax({
-                type: 'POST',
-                url: "/eotd/weapon/move/",
-                data: {'from':fromUnit, 'to':toUnit, 'weapon':weapon},
-                dataType: "json",
-                context: $(this),
-                success: function(data){
-                    ui.draggable.attr("id",toUnit+"_"+weapon);
-                },
-                error: function(data){
-                    $(ui.draggable).animate($(ui.draggable).data('startPosition'), 500);
-                }
-            });
-        }
+        $(".bought-weapon" ).draggable({ revert: "invalid",
+            start: function(event, ui) {
+            $(this).data('startPosition', ui.position);
+            },
         });
-    $(".medieval-slot").droppable({accept:".medieval-weapon"});
+        $(".weapon-slot, .store-slot, .pawn-slot" ).droppable({activeClass: "ui-state-hover",
+            drop: function(event, ui) { 
+                var source = ui.draggable.attr("id").split('_');
+                var fromUnit = source[0];
+                var weapon = source[1]
+                var toUnit = $(this).attr("id").split('_')[1]
+                $.ajax({
+                    type: 'POST',
+                    url: "/eotd/weapon/{{team.id}}/move/",
+                    data: {'from':fromUnit, 'to':toUnit, 'weapon':weapon},
+                    dataType: "json",
+                    context: $(this),
+                    success: function(data){
+                        if (toUnit == 'sell')
+                            ui.draggable.remove();
+                        else
+                            ui.draggable.attr("id",toUnit+"_"+weapon);
+                    },
+                    error: function(data){
+                        alert("error");
+                        $(ui.draggable).animate($(ui.draggable).data('startPosition'), 500);
+                    }
+                });
+            }
+            });
+        $(".medieval-slot").droppable({accept:".medieval-weapon"});
+        $('.purchase_button').click(function() {
+            $("#purchase_dialog").data('caller', this).dialog('open');
+            // prevent the default action, e.g., following a link
+            return false;
+        });
+        $('.name_button').click(function() {
+            $("#name_dialog").data('caller', this).dialog('open');
+            // prevent the default action, e.g., following a link
+            return false;
+        });
+    }
+    dynamic_elements();
     function update_purchase_dialog_html(html){
         $("#purchase_dialog").html(html);
         $( ".equip-button, .equip-and-close-button" ).button();
         $('.equip-button').click({close:false},equip_click);
         $('.equip-and-close-button').click({close:true},equip_click);
+    }
+    function background_inner() {
+        $.ajax({
+            type: 'POST',
+            url: "/eotd/team/{{team.id}}/inner/",
+            context: $(this),
+            success: function(data){
+                $('#id_inner').html(data);
+                dynamic_elements()
+            },
+            });
     }
     function equip_click(event){
         var source = $(this).val().split('_');
@@ -73,9 +103,11 @@ $(document).ready(function() {
             type: 'POST',
             url: "/eotd/unit/"+unit+"/buy/"+weapon+"/",
             success: function(msg){
-            update_purchase_dialog_html(msg);
                 if (event.data.close)
                     $("#purchase_dialog").dialog('close');
+                else
+                    update_purchase_dialog_html(msg);
+                background_inner();
             },
             error: function(msg){
                 alert(msg.responseText);
@@ -141,16 +173,6 @@ $(document).ready(function() {
               },
     });
 
-    $('.purchase_button').click(function() {
-        $("#purchase_dialog").data('caller', this).dialog('open');
-        // prevent the default action, e.g., following a link
-        return false;
-    });
-    $('.name_button').click(function() {
-        $("#name_dialog").data('caller', this).dialog('open');
-        // prevent the default action, e.g., following a link
-        return false;
-    });
     $('#unit_table').sortable({
         items: 'tbody',
         forcePlaceholderSize: true,
@@ -167,7 +189,6 @@ $(document).ready(function() {
             });
             }
         });
-    // greg want disableSelection? $("#unit_table tbody").sortable().disableSelection();
 });
 </script>
 {% endblock extra_head %}
@@ -229,46 +250,10 @@ $(document).ready(function() {
         {% endif %}
     </form>
 
-        <div style="width=100%; display:block; clear:both;">
-            <table id="unit_table" class="ui-widget">
-                <thead class="ui-widget-header">
-                    <tr><th>{% trans 'Name' %}</th><th>{% trans 'Role' %}</th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
-                </thead>
-                    {% for item in team.units.all %}
-                    <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
-                        <tr>
-                            <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
-                        </tr>
-                        <tr>
-                            <td class="weapon_row"><p></p></td>
-                            <td colspan="12" class="weapon_row">
-                            {% if item.weapons.all %}
-                                {% for weapon in item.baseWeapons.all %}
-                                {% comment %}{% if forloop.counter > 1 %}, {% endif %} {% endcomment %}
-                                <div class="weapon">
-                                    {{weapon}}
-                                </div>
-                                {% endfor %}
+    <div id="id_inner"style="width=100%; display:block; clear:both;">
+        {% include 'eotd/team_inner.html' %}
+    </div>
 
-                                {% for weapon in item.boughtWeapons.all %}
-                                {% comment %} greg{% if forloop.counter > 1 or item.baseWeapons %}, {% endif %} {% endcomment %}
-                                <div id="{{item.id}}_{{weapon.id}}" class="weapon bought-weapon ui-state-highlight {% if weapon.medieval %}medieval-weapon{% endif %}">
-                                    <p style="margin-bottom: 0px;">{{weapon}}</p>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
-                            <div class="weapon-slot ui-state-content {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
-                            <div class="ui-state-content"><button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                    {% endfor %}
-            </table>
-        </div>
-
-        <div style="width=100%; display:block; clear:both;">
-greg put team store here?
-        </div>
         {% if edit %}
         <div style="width=100%; display:block; clear:both;">
             <table class="ui-widget">

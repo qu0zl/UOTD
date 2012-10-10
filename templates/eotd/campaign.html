@@ -4,11 +4,25 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
-<link type="text/css" href="{{ STATIC_URL }}css/ui-lightness/jquery-ui-1.8.24.custom.css" rel="Stylesheet" />
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
 
 <script type="text/javascript">
+    var csrftoken = $.cookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
     $(document).ready(function() {
         $( "#id_date" ).datepicker();
+        $( "input:submit, .link, button" ).button();
     });
 </script>
 {% endblock extra_head %}
@@ -20,8 +34,8 @@
 {% block body %}
     <form method="post" id="formObject" action="/eotd/campaign/{{campaign_id}}/save/" enctype="multipart/form-data"> {% csrf_token %}
 <div style="width=100%; display:block; clear:both;">
-            <table>
-                <tbody>
+            <table class="ui-widget">
+                <tbody class="ui-widget-content">
                     <tr>
                     {% if campaign_id == '0' %}
                         <td><h1>{% trans "Create new campaign"%}</h1></td><td>{{formObject.name}}</td></tr>
@@ -41,8 +55,8 @@
 
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
-                <table>
-                    <tbody>
+                <table class="ui-widget">
+                    <tbody class="ui-widget-content">
                         {% if campaign_id == '0' or edit %}
                         <tr><td>{{formObject.secret.label}}</td><td>{{formObject.secret}}</td></tr>
                         {% endif %}
@@ -52,8 +66,8 @@
             </div>
 
             <div class="rightDouble">
-                <table>
-                    <tbody>
+                <table class="ui-widget">
+                    <tbody class="ui-widget-content">
                         <tr><td>{% trans 'Description' %}</td><td>{{formObject.description}}</td></tr>
                     </tbody>
                 </table>
@@ -62,8 +76,8 @@
 
         {% if campaign_id == '0' or edit %}
         <div style="width=100%; display:block; clear:both;">
-            <table>
-                <tbody>
+            <table class="ui-widget">
+                <tbody class="ui-widget-content">
                     <tr>
                         <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
                         <td> <button name="delete" type="submit" id="id_delete">{% trans "delete" %}</button> </td>
@@ -80,15 +94,15 @@
         {% if campaign_id != '0' %}
         <div style="width=100%; display:block; clear:both;">
             <h1>{% trans 'Teams' %}</h1>
-            <table>
-                <thead>
+            <table class="ui-widget">
+                <thead class="ui-widget-header">
                 <tr>
                     <th>{% trans 'Name' %}</th>
                     <th>{% trans 'Owner' %}</th>
                     <th>{% trans 'Team value' %}</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody class="ui-widget-content">
                     {% for item in campaign.teams.all %}
                     <tr>
                         <td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
@@ -104,8 +118,8 @@
         {% if campaign_id != '0' and user.is_authenticated %}
         <form method="post" id="joinCampaign" action="/eotd/campaign/{{campaign_id}}/join/" enctype="multipart/form-data"> {% csrf_token %}
             <div style="width=100%; display:block; clear:both;">
-                <table>
-                    <tbody>
+                <table class="ui-widget">
+                    <tbody class="ui-widget-content">
                         {% if request.user not in campaign.players.all %}
                         <tr>
                             <td> <button name="apply" type="submit">{% trans "Apply to join Campaign" %}</button> </td>
@@ -124,30 +138,34 @@
         {% endif %}
 
         {% if campaign_id != '0' %}
-            <form method="post" id="deleteGame" action="/eotd/game/delete/" enctype="multipart/form-data"> {% csrf_token %}
-                <div style="width=100%; display:block; clear:both;">
-                    <table>
-                        <tbody>
-                            {% for game in campaign.games.all %}
-                            <tr>
-                                <td>{{game.date}}</td>
-                                {% for team in game.teams.all %}
-                                <td><a href="/eotd/team/{{team.id}}/">{{team}}</a></td>
-                                {% endfor %}
-                                <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
-                                <td><button name="deleteGame" type="submit">{% trans "Delete game" %}</button> </td>
-                            </tr>
+            <div style="width=100%; display:block; clear:both;">
+                <h1>{% trans 'Games' %}</h1>
+                <table class="ui-widget">
+                    <thead class="ui-widget-header">
+                        <th>{% trans 'Date' %}</th>
+                    </thead>
+                    <tbody class="ui-widget-content">
+                        {% for game in campaign.games.all %}
+                        <tr>
+                            <td>{{game.date}}</td>
+                            {% for team in game.teams.all %}
+                            <td><a href="/eotd/team/{{team.id}}/">{{team}}</a></td>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </form>
+                            <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
+                            {% if edit %}
+                            <td><a class="link" href="/eotd/game/{{game.id}}/delete/">{% trans "Delete game" %}</a></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endif %}
         {% if campaign_id != '0' and edit %}
         <form method="post" id="addGame" action="/eotd/campaign/{{campaign_id}}/game/" enctype="multipart/form-data"> {% csrf_token %}
             <div style="width=100%; display:block; clear:both;">
-                <table>
-                    <tbody>
+                <table class="ui-widget">
+                    <tbody class="ui-widget-content">
                         <tr>
                             <td>{{gameForm.teams}}</td>
                             <td>{{gameForm.teamTwo}}</td>

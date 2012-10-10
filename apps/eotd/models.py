@@ -83,6 +83,7 @@ STAT_CHOICES = (
 )
 
 WEAPON_STRENGTH_CHOICES = (
+    (-11, _("Model's Strength - 1")),
     (-2, _("Model's Strength + 2")),
     (-1, _("Model's Strength + 1")),
     (0, _("Model's Strength")),
@@ -124,8 +125,11 @@ class Skill(models.Model):
         return self.name
     name = models.CharField(max_length=100)
 
+# covers weapons and non-weapon equipment.
+# weapon field determines if it is or isn't a weapon
 class Weapon(models.Model):
     HANDS_CHOICES = (
+        (0, _('0')),
         (1, _('1')),
         (2, _('2')),
         (3, _('3')),
@@ -133,10 +137,12 @@ class Weapon(models.Model):
     )
     def __unicode__(self):
         return self.name
+
+    weapon = models.BooleanField(default=True)
     name = models.CharField(max_length=100)
     # greg add notes field?
     cost = models.SmallIntegerField(default=0, blank=False)
-    hands = models.SmallIntegerField(choices=HANDS_CHOICES, default=0, blank=False)
+    hands = models.SmallIntegerField(choices=HANDS_CHOICES, default=1, blank=False)
     ccw = models.BooleanField(default=False)
     medieval = models.BooleanField(default=False)
     # -1 for shortRange means template
@@ -185,10 +191,16 @@ class UnitTemplateWeaponList(models.Model):
     weaponLists = models.ForeignKey('WeaponList')
     unitTemplate = models.ForeignKey('UnitTemplate')
 
+# If an item is held by a unit then the 'unit' field will be non-empty
+# if the item is in a team's store, then the 'team' field will be non-empty
 class UnitWeapon(models.Model):
     weapon = models.ForeignKey('Weapon')
-    unit = models.ForeignKey('Unit')
+    unit = models.ForeignKey('Unit', null=True)
+    team = models.ForeignKey('Team', null=True)
     nameOverride = models.CharField(max_length=100, blank=True)
+    # creationTime can be used to determine if a weapon was bought before or after
+    # the most recent game, and thus if we get full price for selling it.
+    creationTime = models.DateTimeField(auto_now_add=True, null=True)
     def __unicode__(self):
         if self.nameOverride:
             return self.nameOverride
@@ -363,7 +375,7 @@ class Team(models.Model):
     owner = models.ForeignKey(User, null=True, default=None, blank=True)
     coins = models.IntegerField(default=0)
     description = models.TextField(max_length=800, blank=True)
-    #units = models.ManyToManyField(Unit, default=None, blank=True)
+    store = models.ManyToManyField('Weapon', default=None, through='UnitWeapon', blank=True)
     def __unicode__(self):
         return self.name
     # Does this Team have a leader model
