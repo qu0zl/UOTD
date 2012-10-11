@@ -58,7 +58,6 @@ $(document).ready(function() {
                             ui.draggable.attr("id",toUnit+"_"+weapon);
                     },
                     error: function(data){
-                        alert("error");
                         $(ui.draggable).animate($(ui.draggable).data('startPosition'), 500);
                     }
                 });

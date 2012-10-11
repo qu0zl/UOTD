@@ -34,7 +34,7 @@ def campaignForm(request, campaign_id):
             'edit':campaign_id == "0" or (request.user.is_authenticated() and campaign.isAdmin(request.user)),
             'formObject':form,
             'gameForm':gameForm,
-            'userTeams':eotd.models.Team.objects.filter(owner=request.user),
+            'userTeams':eotd.models.Team.objects.filter(owner=request.user) if request.user.is_authenticated() else None,
         }, \
         RequestContext(request))
 
