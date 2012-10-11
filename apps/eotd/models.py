@@ -131,6 +131,7 @@ class Skill(models.Model):
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)
+    arcanePower = models.BooleanField(default=False)
 
 # covers weapons and non-weapon equipment.
 # weapon field determines if it is or isn't a weapon
