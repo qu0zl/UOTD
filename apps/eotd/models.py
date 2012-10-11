@@ -120,6 +120,8 @@ class Injury(models.Model):
         (1,  _('MNG')),
         (2,  _('-1 Strength')),
         (3,  _('-1 Fortitude')),
+        (8, _('Arrested')),
+        (9, _('Captured')),
         (10, _('Dead')),
     )
     def __unicode__(self):
@@ -495,8 +497,8 @@ class GameTeam(models.Model):
 class GameUnit(models.Model):
     gameTeam = models.ForeignKey(GameTeam)
     unit = models.ForeignKey('Unit')
-    skills = models.ManyToManyField('Skill', related_name='game_unit_for_skill', default=None, blank=True)
-    injuries = models.ManyToManyField('Injury', related_name='game_unit_for_injury', default=None, blank=True)
+    skills = models.ForeignKey('Skill', related_name='game_unit_for_skill', default=None, blank=True, null=True)
+    injuries = models.ForeignKey('Injury', related_name='game_unit_for_injury', default=None, blank=True, null=True)
     def __unicode__(self):
         return u"%s" % self.unit.name
 

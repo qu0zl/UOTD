@@ -458,7 +458,7 @@ def gameForm(request, game_id):
             for unit in item.gameunit_set.all():
                 # greg need to modify below unit.skills.get to .all() if we move to multiple skills per game
                 line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
-                    "name":unit.unit.name, "skills":unit.skills.get() if unit.skills.count()>0 else None, "injuries":unit.injuries, "summary":unit.unit.gearAsString} )
+                    "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries, "summary":unit.unit.gearAsString} )
                 inner.append( line)
             units.append(inner)
         # greg confirm what happens with a logged out user calling canEdit below?
@@ -512,8 +512,14 @@ def gameUnits(request, game_id):
                 if item.endswith('-skills'):
                     prefix=item.split('-')[0]
                     gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
-                    gameUnit.skills = request.POST[item]
-                    gameUnit.injuries = request.POST['%s-injuries' % prefix]
+                    try:
+                        gameUnit.skills = eotd.models.Skill.objects.get(id=request.POST[item])
+                    except ValueError:
+                        gameUnit.skills = None
+                    try:
+                        gameUnit.injuries = eotd.models.Injury.objects.get(id=request.POST['%s-injuries' % prefix])
+                    except ValueError:
+                        gameUnit.injuries = None
                     gameUnit.save()
                     #greg check this user can edit this gameUnit somehow
             return redirect('/eotd/game/%s/' % game_id)
