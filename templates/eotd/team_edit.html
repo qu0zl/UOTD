@@ -218,9 +218,10 @@ $(document).ready(function() {
 
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
-                <table class="ui-widget-header">
+                <table>
                     <tbody class="ui-widget-content">
                         <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
+                        <tr><td>{% trans 'Owner' %}</td><td><a href="/profiles/profile/{{team.owner}}/">{{team.owner}}</a></td></tr>
                         <tr><td>{% trans 'Standing' %}</td><td>{{team.value}}</td></tr>
                         <tr><td>{% trans 'Coins' %}</td><td>{{team.coins}}</td></tr>
                         <tr><td>{% trans 'Faction' %}</td><td>{{team.faction}}</td></tr>
