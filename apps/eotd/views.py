@@ -33,7 +33,8 @@ def campaignForm(request, campaign_id):
             'campaign_id':campaign_id,
             'edit':campaign_id == "0" or (request.user.is_authenticated() and campaign.isAdmin(request.user)),
             'formObject':form,
-            'gameForm':gameForm
+            'gameForm':gameForm,
+            'userTeams':eotd.models.Team.objects.filter(owner=request.user),
         }, \
         RequestContext(request))
 
@@ -145,6 +146,13 @@ def campaignJoinHandler( request, campaign_id ):
             return campaignApply(request, campaign)
         if 'createTeam' in request.POST:
             return teamNewForCampaign(request, campaign=campaign)
+        if 'addTeam' in request.POST:
+            team = eotd.models.Team.objects.get(id=request.POST['addPriorTeam'])
+            try:
+                campaign.addTeam(team)
+                return HttpResponse(_('Added team to campaign.'))
+            except PermissionDenied as e:
+                return HttpResponseBadRequest(_(str(e)))
     return HttpResponseBadRequest(_('Invalid campaign join attempt.'))
 
 def campaignApplicantList( request, campaign_id ):

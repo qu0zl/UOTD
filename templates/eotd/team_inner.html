@@ -35,10 +35,12 @@
 </div>
 
 <div style="width=100%; display:block; clear:both;" class="ui-widget-header">
+    {% if edit %}
     <div class="pawn-slot ui-widget-header" id="id_sell">
         <p><h2>Sell item</h2>
         (drag item here)</p>
     </div>
+    {% endif %}
     <div class="ui-widget-header store-slot" id="id_store">
         <p><h2>Faction store.</h2>
         (drag item here)</p>

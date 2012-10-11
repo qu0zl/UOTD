@@ -120,14 +120,24 @@
             <div style="width=100%; display:block; clear:both;">
                 <table class="ui-widget">
                     <tbody class="ui-widget-content">
-                        {% if request.user not in campaign.players.all %}
+                        {% if user not in campaign.players.all %}
                         <tr>
                             <td> <button name="apply" type="submit">{% trans "Apply to join Campaign" %}</button> </td>
                             <td> <button name="join" type="submit">{% trans "Join Campaign (enter password)" %}</button> </td><td><input type="text" name="password" id="id_password"/></td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td> <button name="addTeam" type="button"><a href="/eotd/campaign/{{campaign_id}}/team/add/">{% trans "Add pre-existing team" %}</a></button> </td>
+                            <td> <button name="addTeam" type="submit">{% trans "Add pre-existing team" %}</a></button>
+                                <select name="addPriorTeam">
+                                    <option value="" selected>----</option>
+                                    {% for team in userTeams %}
+                                    {% if not team in campaign.teams.all %}
+                                    <option value="{{team.id}}">{{team}}</option>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </select>
+                            </td>
                             <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/" >{% trans "Create new team for this campaign" %}</a></button> </td>
                         </tr>
                         {% endif %}

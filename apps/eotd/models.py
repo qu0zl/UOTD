@@ -116,10 +116,17 @@ class WeaponList(models.Model):
     weapons = models.ManyToManyField('Weapon', related_name='weapon_lists', default=None, blank=False)
 
 class Injury(models.Model):
+    INJURY_PENALTIES = (
+        (1,  _('MNG')),
+        (2,  _('-1 Strength')),
+        (3,  _('-1 Fortitude')),
+        (10, _('Dead')),
+    )
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)
-        
+    penalty = models.SmallIntegerField(choices=INJURY_PENALTIES, default=1, blank=False)
+
 class Skill(models.Model):
     def __unicode__(self):
         return self.name
