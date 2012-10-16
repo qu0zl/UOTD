@@ -477,6 +477,7 @@ class GameTeam(models.Model):
     team = models.ForeignKey('Team')
     victoryPoints = models.SmallIntegerField(default=0, blank=False)
     earnings = models.SmallIntegerField(default=0, blank=False)
+    # greg freezeTime = models.DateTimeField(default=0, null=True)
     # units involved in this game
     units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
     # copies the units currently in the team into the 'units' field.

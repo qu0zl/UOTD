@@ -18,6 +18,16 @@
             <dt><a href="{% url profile_detail user.username %}">fill out your profile</a></dt>
             <dd>to tell the world a little about yourself.</dd>
             
+            <dt><a href="/eotd/team/0/">create a new team</a></dt>
+            <dd>create a new team to adventure in the <i>Empire of the Dead</i>'.</dd>
+
+            <dt><a href="/eotd/campaign/">join a campaign</a></dt>
+            <dd>view the campaign list and find your local one to join.</dd>
+
+            <dt><a href="/eotd/campaign/0/">create a new campaign</a></dt>
+            <dd>or create a new campaign for your and your friends.</dd>
+
+
             {% ifsetting ACCOUNT_OPEN_SIGNUP %}
             {% else %}
                 {% if user.is_staff %}
