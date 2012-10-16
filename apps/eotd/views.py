@@ -392,10 +392,10 @@ def weaponMove(request, team_id):
             # sale
             if not toUnit and not store:
                 # greg logic to handle pawn depreciation
-                if weaponEntry.creationTime > team.freezeTime:
-                    team.coins = team.coins + weaponEntry.weapon.cost
-                else:
+                if team.playedSince(weaponEntry.creationTime):
                     team.coins = team.coins + math.ceil(weaponEntry.weapon.cost/2.0)
+                else:
+                    team.coins = team.coins + weaponEntry.weapon.cost
                 team.save()
                 weaponEntry.delete()
             # store

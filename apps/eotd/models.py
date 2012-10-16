@@ -428,12 +428,12 @@ class Team(models.Model):
     # Return true if we have played a game since the passed time
     # Used to compare purchase times of equipment/injuries to the current freezeTime value
     def playedSince(self, time):
-        if time > self.freezeTime:
-            return True
-        return False
+        if not self.freezeTime or time > self.freezeTime:
+            return False
+        return True
     # Update the currently tracked most recent game played time-stamp
-    def updateFreezeTime(time):
-        if time > self.freezeTime:
+    def updateFreezeTime(self, time):
+        if not self.freezeTime or time > self.freezeTime:
             self.freezeTime = time
             self.save()
     @property
