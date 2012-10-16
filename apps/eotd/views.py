@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.forms.formsets import formset_factory
 import json
+import math #used for ceil
 from django.utils import simplejson
 from datetime import datetime
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
@@ -391,7 +392,10 @@ def weaponMove(request, team_id):
             # sale
             if not toUnit and not store:
                 # greg logic to handle pawn depreciation
-                team.coins = team.coins + weaponEntry.weapon.cost
+                if weaponEntry.creationTime > team.freezeTime:
+                    team.coins = team.coins + weaponEntry.weapon.cost
+                else:
+                    team.coins = team.coins + math.ceil(weaponEntry.weapon.cost/2.0)
                 team.save()
                 weaponEntry.delete()
             # store

@@ -386,6 +386,7 @@ class Team(models.Model):
     coins = models.IntegerField(default=0)
     description = models.TextField(max_length=800, blank=True)
     store = models.ManyToManyField('Weapon', default=None, through='UnitWeapon', blank=True)
+    freezeTime = models.DateTimeField(null=True, blank=True)
     def __unicode__(self):
         return self.name
     # Does this Team have a leader model
@@ -424,6 +425,17 @@ class Team(models.Model):
                 unit.save()
         except Exception as e:
             print 'greg big catch all. Remove.', e
+    # Return true if we have played a game since the passed time
+    # Used to compare purchase times of equipment/injuries to the current freezeTime value
+    def playedSince(self, time):
+        if time > self.freezeTime:
+            return True
+        return False
+    # Update the currently tracked most recent game played time-stamp
+    def updateFreezeTime(time):
+        if time > self.freezeTime:
+            self.freezeTime = time
+            self.save()
     @property
     def value(self):
         cost = self.coins
@@ -477,7 +489,7 @@ class GameTeam(models.Model):
     team = models.ForeignKey('Team')
     victoryPoints = models.SmallIntegerField(default=0, blank=False)
     earnings = models.SmallIntegerField(default=0, blank=False)
-    # greg freezeTime = models.DateTimeField(default=0, null=True)
+    freezeTime = models.DateTimeField(null=True, blank=True)
     # units involved in this game
     units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
     # copies the units currently in the team into the 'units' field.
@@ -489,7 +501,10 @@ class GameTeam(models.Model):
         for item in self.team.units.all():
             gameUnit = GameUnit(gameTeam=self, unit=item)
             gameUnit.save()
+        self.freezeTime = datetime.datetime.now()
         self.save()
+        # Update the team object's most recent game timestamp
+        self.team.updateFreezeTime(self.freezeTime)
 
     def __unicode__(self):
         return u"Team: %s, VP: %s, Winnings: %s" % (self.team, self.victoryPoints, self.earnings)
