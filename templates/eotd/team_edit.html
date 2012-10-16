@@ -87,9 +87,13 @@ $(document).ready(function() {
             type: 'POST',
             url: "/eotd/team/{{team.id}}/inner/",
             context: $(this),
-            success: function(data){
-                $('#id_inner').html(data);
-                dynamic_elements()
+            dataType: "json",
+            success: function(msg){
+                if (msg['coins'])
+                    $('#id_coins').text(msg['coins']);
+                if (msg['inner'])
+                    $('#id_inner').html(msg['inner']);
+                dynamic_elements();
             },
             });
     }
@@ -222,7 +226,7 @@ $(document).ready(function() {
                         <tr><td>{{formObject.name.label}}</td><td>{{formObject.name}}</td></tr>
                         <tr><td>{% trans 'Owner' %}</td><td><a href="/profiles/profile/{{team.owner}}/">{{team.owner}}</a></td></tr>
                         <tr><td>{% trans 'Standing' %}</td><td>{{team.value}}</td></tr>
-                        <tr><td>{% trans 'Coins' %}</td><td>{{team.coins}}</td></tr>
+                        <tr><td>{% trans 'Coins' %}</td><td id="id_coins">{{team.coins}}</td></tr>
                         <tr><td>{% trans 'Faction' %}</td><td>{{team.faction}}</td></tr>
                     </tbody>
                 </table>

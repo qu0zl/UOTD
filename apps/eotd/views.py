@@ -9,6 +9,7 @@ from datetime import datetime
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render_to_response, redirect, render
 from django.template import RequestContext
+from django.template.loader import render_to_string
 import random, string
 import eotd.models
 
@@ -253,12 +254,17 @@ def teamForm(request, team_id):
 def teamInnerForm(request, team_id):
     print 'greg, teamInnerForm'
     team = eotd.models.Team.objects.get(id=team_id)
-    return render_to_response('eotd/team_inner.html', \
+    rDict = {}
+    rDict['inner']= render_to_string('eotd/team_inner.html', \
         {
             'team':team,
             'edit': request.user.is_authenticated() and request.user == team.owner
         }, \
         RequestContext(request))
+    rDict['coins']=team.coins
+    json_data = json.dumps(rDict)
+    # json data is just a JSON string now. 
+    return HttpResponse(json_data, mimetype="application/json")
 
 # Save a new team - ie just the name, faction, coins and description.
 def newTeamSave(request):
