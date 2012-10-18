@@ -266,7 +266,11 @@ class Unit(models.Model):
     team = models.ForeignKey('Team', related_name='units', default=None, blank=False)
     # used for unit ordering in a team
     unitOrder = models.SmallIntegerField(default=999, blank=False)
+    creationTime = models.DateTimeField(auto_now_add=True, null=True)
 
+    @property
+    def isNew(self):
+        return self.team.playedSince(self.creationTime)
     def handsWorth(self):
         hands = 0
         # greg also check equipment...

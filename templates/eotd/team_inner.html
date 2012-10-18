@@ -26,7 +26,9 @@
                         {% endfor %}
                     {% endif %}
                     <div class="weapon-slot ui-state-content {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
-                    <div class="ui-state-content"><button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button></div>
+                    <div style="float:right;">
+                        <div class="ui-state-content" style="display:inline-block; float:right;"><button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button></div><div class="ui-state-content" style="padding:0px 6px; display:inline-block; float:left;"><button class="fire_button" type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Un-hire' %} {% else %} {% trans 'Fire' %} {% endif %}</button></div>
+                    </div>
                     </td>
                 </tr>
             </tbody>
