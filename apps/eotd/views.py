@@ -419,7 +419,7 @@ def weaponMove(request, team_id):
             return HttpResponseBadRequest(_('User unauthorised.'))
     except Exception as e:
         return HttpResponseBadRequest(_('Failed to move weapon'))
-    return HttpResponse()
+    return HttpResponse(team.coins)
 
 # Do not put anything private in here as the user does NOT need to be authenticated.
 # I consider the equipment options available to a model to be public knowledge

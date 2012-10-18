@@ -51,11 +51,12 @@ $(document).ready(function() {
                     data: {'from':fromUnit, 'to':toUnit, 'weapon':weapon},
                     dataType: "json",
                     context: $(this),
-                    success: function(data){
+                    success: function(msg){
                         if (toUnit == 'sell')
                             ui.draggable.remove();
                         else
                             ui.draggable.attr("id",toUnit+"_"+weapon);
+                        $('#id_coins').html(msg);
                     },
                     error: function(data){
                         $(ui.draggable).animate($(ui.draggable).data('startPosition'), 500);

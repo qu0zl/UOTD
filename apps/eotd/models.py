@@ -270,7 +270,7 @@ class Unit(models.Model):
 
     @property
     def isNew(self):
-        return self.team.playedSince(self.creationTime)
+        return not self.team.playedSince(self.creationTime)
     def handsWorth(self):
         hands = 0
         # greg also check equipment...
