@@ -1,10 +1,8 @@
 {% load i18n %}
 <div style="width=100%; display:block; clear:both;">
     <table id="unit_table" class="ui-widget">
-        <thead class="ui-widget-header">
-            <tr><th>{% trans 'Name' %}</th><th>{% trans 'Role' %}</th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th></tr>
-        </thead>
-            {% for item in team.units.all %}
+        {% include 'eotd/team_inner_thead.html' %}
+            {% for item in team.activeUnits %}
             <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
                 <tr>
                     <td id="td_name_{{item.id}}"><button class="name_button" style="width: 150px" value="{{item.id}}" id="name_{{item.id}}">{{ item.name}}</button></td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td>
@@ -27,14 +25,37 @@
                     {% endif %}
                     <div class="weapon-slot ui-state-content {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
                     <div style="float:right;">
-                        <div class="ui-state-content" style="display:inline-block; float:right;"><button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button></div><div class="ui-state-content" style="padding:0px 6px; display:inline-block; float:left;"><button class="fire_button" type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Cancel hire' %} {% else %} {% trans 'Retire' %} {% endif %}</button></div>
+                        <div class="ui-state-content" style="display:inline-block; float:right;">
+                            <button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button>
+                        </div>
+                        {% if item.isMNG %}
+                        <div class="MNG ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only"><p>Miss Next game</p></div>
+                        {% endif %}
+                        <div class="ui-state-content" style="padding:0px 6px; display:inline-block; float:left;">
+                            <button class={% if item.isNew %}"unhire_button"{% else %}"retire_button"{% endif %} type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Cancel hire' %} {% else %} {% trans 'Retire' %} {% endif %}</button>
+                        </div>
                     </div>
                     </td>
                 </tr>
             </tbody>
             {% endfor %}
-    </table>
-</div>
+        </table>
+    </div>
+    {% if team.retiredUnits %}
+    <div id="id_retired">
+        <p>View retired and dead.</g>
+        <table>
+            {% include 'eotd/team_inner_thead.html' %}
+            <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
+                {% for item in team.retiredUnits %}
+                <tr>
+                    <td>{{ item.name}}</td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><button value="greg">hello</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 
 <div style="width=100%; display:block; clear:both;" class="ui-widget-header">
     {% if edit %}

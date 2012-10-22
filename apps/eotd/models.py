@@ -3,6 +3,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+import math #used for ceil
 import datetime
 # no longer needed - from itertools import chain
 
@@ -116,13 +117,19 @@ class WeaponList(models.Model):
     weapons = models.ManyToManyField('Weapon', related_name='weapon_lists', default=None, blank=False)
 
 class Injury(models.Model):
+    MNG=1
+    MINUS_STRENGTH=2
+    MINUS_FORTITUDE=3
+    ARRESTED=8
+    CAPTURED=9
+    DEAD=10
     INJURY_PENALTIES = (
-        (1,  _('MNG')),
-        (2,  _('-1 Strength')),
-        (3,  _('-1 Fortitude')),
-        (8, _('Arrested')),
-        (9, _('Captured')),
-        (10, _('Dead')),
+        (MNG,  _('MNG')),
+        (MINUS_STRENGTH,  _('-1 Strength')),
+        (MINUS_FORTITUDE,  _('-1 Fortitude')),
+        (ARRESTED, _('Arrested')),
+        (CAPTURED, _('Captured')),
+        (DEAD, _('Dead')),
     )
     def __unicode__(self):
         return self.name
@@ -164,7 +171,7 @@ class Weapon(models.Model):
 class Faction(models.Model):
     GOOD=1
     NEUTRAL=2
-    EVIL=2
+    EVIL=3
     ALIGNMENT_CHOICES = (
         (GOOD,  _('Good')),
         (NEUTRAL,  _('Neutral')),
@@ -216,7 +223,17 @@ class UnitWeapon(models.Model):
             return self.nameOverride
         else:
             return unicode(self.weapon)
-
+    def sell(self):
+        try:
+            team = self.unit.team
+        except AttributeError as e:
+            team = self.team
+        if team.playedSince(self.creationTime):
+                team.coins = team.coins + math.ceil(self.weapon.cost/2.0)
+        else:
+            team.coins = team.coins + self.weapon.cost
+        team.save()
+        self.delete()
 # Describes a unit or team-member model. These are the unmodified statistics that will
 # act as a template on which instances of units in a campaign will be based.
 
@@ -267,6 +284,7 @@ class Unit(models.Model):
     # used for unit ordering in a team
     unitOrder = models.SmallIntegerField(default=999, blank=False)
     creationTime = models.DateTimeField(auto_now_add=True, null=True)
+    retiredTime = models.DateTimeField(null=True, blank=True)
 
     @property
     def isNew(self):
@@ -382,6 +400,35 @@ class Unit(models.Model):
             else:
                 rv = rv + item.name
         return rv
+    # Is the unit missing the next game - MNG, captured, etc
+    @property
+    def isMNG(self):
+        # greg filter based on freezeTime
+        try:
+            mostRecentGame = self.gameunit_set.filter(gameTeam__freezeTime=self.team.freezeTime).get()
+            try:
+                if mostRecentGame.injuries.penalty == Injury.MNG:
+                    return True
+            except AttributeError:
+                pass
+        except ObjectDoesNotExist:
+            pass
+        return False
+    @property
+    def isRetired(self):
+        return self.retiredTime != None
+    def fire(self):
+        # Move all carried items to team store
+        for item in self.unitweapon_set.all():
+            item.unit = None
+            item.team = self.team
+            item.save()
+        if self.isNew:
+            self.team.adjustCoins(self.baseUnit.cost)
+            self.delete()
+        else: # Mark as retired
+            self.retiredTime=datetime.datetime.now()
+            self.save()
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -417,8 +464,7 @@ class Team(models.Model):
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
         print 'unit unitOrder is', unit.unitOrder
         unit.save()
-        self.coins = self.coins - unitTemplate.cost
-        self.save()
+        self.adjustCoins(unitTemplate.cost * -1)
         return self.coins
     def reorder(self, order):
         try:
@@ -447,6 +493,15 @@ class Team(models.Model):
             cost = cost + unit.cost
         print 'greg modify team value to include stored equipment'
         return cost
+    def adjustCoins(self, amount):
+        self.coins = self.coins + amount
+        self.save()
+    @property
+    def activeUnits(self):
+        return Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
+    @property
+    def retiredUnits(self):
+        return Unit.objects.filter(team=self).exclude(retiredTime=None)
 
 class NewTeamForm(forms.ModelForm):
     campaignID = forms.IntegerField(label="", widget=forms.HiddenInput(), required=False)

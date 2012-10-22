@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.forms.formsets import formset_factory
 import json
-import math #used for ceil
 from django.utils import simplejson
 from datetime import datetime
 from django.http import HttpResponseRedirect, HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
@@ -251,9 +250,12 @@ def teamForm(request, team_id):
         }, \
         RequestContext(request))
 
-def teamInnerForm(request, team_id):
-    print 'greg, teamInnerForm'
-    team = eotd.models.Team.objects.get(id=team_id)
+def teamInnerForm(request, team):
+    try:
+        team.id
+    except Exception as e:
+        team = eotd.models.Team.objects.get(id=team)
+        
     rDict = {}
     rDict['inner']= render_to_string('eotd/team_inner.html', \
         {
@@ -397,13 +399,9 @@ def weaponMove(request, team_id):
                 raise Exception("Units are not on the same team.")
             # sale
             if not toUnit and not store:
-                # greg logic to handle pawn depreciation
-                if team.playedSince(weaponEntry.creationTime):
-                    team.coins = team.coins + math.ceil(weaponEntry.weapon.cost/2.0)
-                else:
-                    team.coins = team.coins + weaponEntry.weapon.cost
-                team.save()
-                weaponEntry.delete()
+                weaponEntry.sell()
+                # Need to refresh team object as weaponEntry may modify its coins value
+                team = eotd.models.Team.objects.get(id=team.id)
             # store
             elif not toUnit:
                 weaponEntry.team = team
@@ -418,6 +416,7 @@ def weaponMove(request, team_id):
         else:
             return HttpResponseBadRequest(_('User unauthorised.'))
     except Exception as e:
+        print 'greg weapon move exception', e
         return HttpResponseBadRequest(_('Failed to move weapon'))
     return HttpResponse(team.coins)
 
@@ -435,6 +434,22 @@ def unitEquipHTML(request, unit_id):
     except Exception as e:
         print 'unitEquipHTML Exception', e
         return HttpResponseBadRequest(_('Failed to retrieve equipment options.'))
+
+def unitFireHTML(request, unit_id):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            if request.user == unit.team.owner:
+                team = unit.team
+                unit.fire()
+                return teamInnerForm(request, team)
+            else:
+                return HttpResponseBadRequest(_('User unauthorised.'))
+    except PermissionDenied as e:
+        return HttpResponseBadRequest(_(str(e)))
+    except Exception as e:
+        print 'unitFireHtml Exception', e
+        return HttpResponseBadRequest(_('Error firing character. Please retry.'))
 
 def unitBuyHTML(request, unit_id, item_id):
     try:

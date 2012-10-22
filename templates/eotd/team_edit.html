@@ -14,6 +14,7 @@
     .store-slot { width:50%; display:inline-block;float:right;margin:10px; min-height:80px;}
     .weapon_row { padding:1px 8px 1px; }
     .equip_select { display:inline-block;float:left;margin:1px; }
+    .MNG { display:inline-block;float:left;margin:1px; padding:0px 6px; }
 </style>
 <script type="text/javascript">
 
@@ -65,6 +66,28 @@ $(document).ready(function() {
             }
             });
         $(".medieval-slot").droppable({accept:".medieval-weapon"});
+        function fire_core(unit) {
+            $.ajax({
+                type: 'POST',
+                url: "/eotd/unit/"+unit+"/fire/",
+                dataType: "json",
+                success: handleInner,
+                error: function(msg){
+                    alert(msg.responseText);
+                }
+            });
+        }
+        $('.unhire_button').click(function() {
+            if (confirm("{% trans 'Please confirm that you wish to cancel hiring this character.' %}")) {
+                fire_core($(this).val().split('_')[0]);
+            }
+            return false;
+        });
+        $('.retire_button').click(function() {
+            if (confirm("{% trans 'Are you certain you want to retire this character?\nYou will not be able to reverse this decision after playing your next game.' %}"))
+                fire_core($(this).val().split('_')[0]);
+            return false;
+        });
         $('.purchase_button').click(function() {
             $("#purchase_dialog").data('caller', this).dialog('open');
             // prevent the default action, e.g., following a link
@@ -75,6 +98,14 @@ $(document).ready(function() {
             // prevent the default action, e.g., following a link
             return false;
         });
+        $("#id_retired").accordion({collapsible:true, active:false});
+    }
+    function handleInner(msg){
+        if (msg['coins'])
+            $('#id_coins').text(msg['coins']);
+        if (msg['inner'])
+            $('#id_inner').html(msg['inner']);
+        dynamic_elements();
     }
     dynamic_elements();
     function update_purchase_dialog_html(html){
@@ -89,13 +120,7 @@ $(document).ready(function() {
             url: "/eotd/team/{{team.id}}/inner/",
             context: $(this),
             dataType: "json",
-            success: function(msg){
-                if (msg['coins'])
-                    $('#id_coins').text(msg['coins']);
-                if (msg['inner'])
-                    $('#id_inner').html(msg['inner']);
-                dynamic_elements();
-            },
+            success: handleInner,
             });
     }
     function equip_click(event){
