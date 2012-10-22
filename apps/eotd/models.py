@@ -136,6 +136,13 @@ class Injury(models.Model):
     name = models.CharField(max_length=100)
     penalty = models.SmallIntegerField(choices=INJURY_PENALTIES, default=1, blank=False)
 
+class GameUnitInjury(models.Model):
+    def __unicode__(self):
+        return u'%s: %shealed' % (self.injury.name, '' if self.healed else 'not ')
+    healed = models.BooleanField(default=False)
+    injury = models.ForeignKey(Injury)
+    gameUnit = models.ForeignKey('GameUnit')
+
 class Skill(models.Model):
     def __unicode__(self):
         return self.name
@@ -573,7 +580,7 @@ class GameUnit(models.Model):
     gameTeam = models.ForeignKey(GameTeam)
     unit = models.ForeignKey('Unit')
     skills = models.ForeignKey('Skill', related_name='game_unit_for_skill', default=None, blank=True, null=True)
-    injuries = models.ForeignKey('Injury', related_name='game_unit_for_injury', default=None, blank=True, null=True)
+    injuries = models.ManyToManyField('Injury', through="GameUnitInjury", default=None, blank=True)
     def __unicode__(self):
         return u"%s" % self.unit.name
 

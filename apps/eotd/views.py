@@ -482,8 +482,9 @@ def gameForm(request, game_id):
             inner = []
             for unit in item.gameunit_set.all():
                 # greg need to modify below unit.skills.get to .all() if we move to multiple skills per game
+                #greg gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
                 line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
-                    "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries, "summary":unit.unit.gearAsString} )
+                    "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries.get() if unit.injuries.count() == 1 else None, "summary":unit.unit.gearAsString} )
                 inner.append( line)
             units.append(inner)
         # greg confirm what happens with a logged out user calling canEdit below?
@@ -541,12 +542,21 @@ def gameUnits(request, game_id):
                         gameUnit.skills = eotd.models.Skill.objects.get(id=request.POST[item])
                     except ValueError:
                         gameUnit.skills = None
-                    try:
-                        gameUnit.injuries = eotd.models.Injury.objects.get(id=request.POST['%s-injuries' % prefix])
-                    except ValueError:
-                        gameUnit.injuries = None
                     gameUnit.save()
-                    #greg check this user can edit this gameUnit somehow
+
+                    try:
+                        injury = eotd.models.Injury.objects.get(id=request.POST['%s-injuries' % prefix])
+                        try:
+                            gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
+                            gameUnitInjury.injury = injury
+                        except ObjectDoesNotExist:
+                            gameUnitInjury = eotd.models.GameUnitInjury(gameUnit=gameUnit, injury=injury)
+                        gameUnitInjury.save()
+                    except ValueError:
+                        try:
+                            eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit).delete()
+                        except ObjectDoesNotExist:
+                            pass
             return redirect('/eotd/game/%s/' % game_id)
     except Exception as e:
         print 'gameUnits Exception', e
