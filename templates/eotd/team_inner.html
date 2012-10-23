@@ -41,15 +41,15 @@
             {% endfor %}
         </table>
     </div>
-    {% if team.retiredUnits %}
+    {% if team.inactiveUnits %}
     <div id="id_retired">
         <p>View retired and dead.</g>
         <table>
             {% include 'eotd/team_inner_thead.html' %}
             <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
-                {% for item in team.retiredUnits %}
+                {% for item in team.inactiveUnits %}
                 <tr>
-                    <td>{{ item.name}}</td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><button value="greg">hello</button></td>
+                    <td>{{ item.name}}</td><td>{{item.baseUnit.name}}<td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td>{% if item.recentlyRetired %}<button value="{{item.id}}" class="unretire_button">Un-retire</button>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

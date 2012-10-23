@@ -144,10 +144,32 @@ class GameUnitInjury(models.Model):
     gameUnit = models.ForeignKey('GameUnit')
 
 class Skill(models.Model):
+    STRENGTH=1
+    FORTITUDE=2
+    MARKSMANSHIP=3
+    MOVEMENT=4
+    ATTACKS=5
+    WOUNDS=6
+    BRAVADO=7
+    ARCANE=8
+    COMBAT=9
+    STAT_MODS = (
+        (STRENGTH, _('Strength')),
+        (FORTITUDE, _('Fortitude')),
+        (MARKSMANSHIP, _('Marksmanship')),
+        (MOVEMENT, _('Movement')),
+        (ATTACKS, _('Attacks')),
+        (WOUNDS, _('Wounds')),
+        (BRAVADO, _('Bravado')),
+        (ARCANE, _('Arcane')),
+        (COMBAT, _('Combat')),
+    )
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)
     arcanePower = models.BooleanField(default=False)
+    statMod = models.SmallIntegerField(choices=STAT_MODS, default=None, blank=True, verbose_name="Unit stat modified", null=True)
+    statModAmount = models.SmallIntegerField(choices=tuple((x,x) for x in range(-1, 2)), default=0, blank=True, verbose_name="Unit stat modification amount")
 
 # covers weapons and non-weapon equipment.
 # weapon field determines if it is or isn't a weapon
@@ -296,6 +318,11 @@ class Unit(models.Model):
     @property
     def isNew(self):
         return not self.team.playedSince(self.creationTime)
+    @property
+    def recentlyRetired(self):
+        if self.retiredTime and not self.team.playedSince(self.retiredTime):
+            return True
+        return False
     def handsWorth(self):
         hands = 0
         # greg also check equipment...
@@ -359,28 +386,37 @@ class Unit(models.Model):
         return self.baseUnit.movement
     @property
     def combat(self):
-        return self.baseUnit.combat+self.faction.combatMod
+        return self.moddedStat(self.baseUnit.combat+self.faction.combatMod, None, Skill.COMBAT)
     @property
     def marksmanship(self):
-        return self.baseUnit.marksmanship + self.faction.marksmanshipMod
+        return self.moddedStat(self.baseUnit.marksmanship+self.faction.marksmanshipMod, None, Skill.MARKSMANSHIP)
+    def moddedStat(self, baseStat, injuryType=None, statType=None):
+        modded = baseStat - self.injuryCount(injuryType) + self.statModCount(statType)
+        if modded < baseStat:
+            return "%s*" % modded
+        elif modded > baseStat:
+            return "%s^" % modded
+        return modded
     @property
     def strength(self):
-        return self.baseUnit.strength
+        return self.moddedStat(self.baseUnit.strength, Injury.MINUS_STRENGTH, Skill.STRENGTH)
     @property
     def fortitude(self):
-        return self.baseUnit.fortitude
+        return self.moddedStat(self.baseUnit.fortitude, Injury.MINUS_FORTITUDE, Skill.FORTITUDE)
     @property
     def attacks(self):
-        return self.baseUnit.attacks
+        # need to handle teeth and claws and multiple weapons in general.
+        return self.moddedStat(self.baseUnit.attacks, None, Skill.ATTACKS)
     @property
     def wounds(self):
-        return self.baseUnit.wounds
+        return self.moddedStat(self.baseUnit.wounds, None, Skill.WOUNDS)
     @property
     def bravado(self):
-        return self.baseUnit.bravado + self.faction.bravadoMod
+        # greg need to make this handle bravado crippling injury. I think there may be some?
+        return self.moddedStat(self.baseUnit.bravado+self.faction.bravadoMod, None, Skill.BRAVADO)
     @property
     def arcane(self):
-        return self.baseUnit.arcane + self.faction.arcaneMod
+        return self.moddedStat(self.baseUnit.arcane+self.faction.arcaneMod, None, Skill.ARCANE) 
     @property
     def weapons(self):
         return self.baseUnit.weapons.all() | self.unitWeapons.all()
@@ -421,6 +457,25 @@ class Unit(models.Model):
         except ObjectDoesNotExist:
             pass
         return False
+    def statModCount(self, statType):
+        if not statType:
+            return 0
+        try:
+            # Working on assumption that all stat mods are only +1, so will return count rather than slower process of dereferencing
+            # and summing the mods
+            return self.gameunit_set.filter(skills__statMod=statType).count()
+        except ObjectDoesNotExist:
+            return 0
+    def injuryCount(self, injuryType):
+        if not injuryType:
+            return 0
+        try:
+            return self.gameunit_set.filter(gameunitinjury__healed=False, gameunitinjury__injury__penalty=injuryType).count()
+        except ObjectDoesNotExist:
+            return 0
+    @property
+    def isDead(self):
+        return self.injuryCount(Injury.DEAD) > 0
     @property
     def isRetired(self):
         return self.retiredTime != None
@@ -494,21 +549,34 @@ class Team(models.Model):
             self.freezeTime = time
             self.save()
     @property
+    def storeValue(self):
+        value = 0
+        for entry in UnitWeapon.objects.filter(team=self, unit=None):
+            value = value+entry.weapon.cost
+        return value
+    @property
     def value(self):
         cost = self.coins
-        for unit in self.units.all():
+        for unit in self.activeUnits:
             cost = cost + unit.cost
-        print 'greg modify team value to include stored equipment'
-        return cost
+        return cost + self.storeValue
     def adjustCoins(self, amount):
         self.coins = self.coins + amount
         self.save()
     @property
     def activeUnits(self):
-        return Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
+        nonRetired = Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
+        return [x for x in nonRetired if not x.isDead]
+    @property
+    def inactiveUnits(self):
+        return list(self.retiredUnits) + self.deadUnits
     @property
     def retiredUnits(self):
         return Unit.objects.filter(team=self).exclude(retiredTime=None)
+    @property
+    def deadUnits(self):
+        nonRetired = Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
+        return [x for x in nonRetired if x.isDead]
 
 class NewTeamForm(forms.ModelForm):
     campaignID = forms.IntegerField(label="", widget=forms.HiddenInput(), required=False)

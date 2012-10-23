@@ -334,9 +334,6 @@ def teamHire(request, team_id, unit_id):
 
         # greg work for ajax and request.method == 'POST':
 
-def teamFire(request, team_id, unit_id):
-    pass
-
 def teamReorder(request, team_id):
     if request.is_ajax() and request.user.is_authenticated() and request.method == 'POST':
         team = eotd.models.Team.objects.get(id=team_id)
@@ -450,6 +447,24 @@ def unitFireHTML(request, unit_id):
     except Exception as e:
         print 'unitFireHtml Exception', e
         return HttpResponseBadRequest(_('Error firing character. Please retry.'))
+
+def unitUnFireHTML(request, unit_id):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            if request.user == unit.team.owner:
+                team = unit.team
+                if unit.recentlyRetired:
+                    unit.retiredTime=None
+                    unit.save()
+                return teamInnerForm(request, team)
+            else:
+                return HttpResponseBadRequest(_('User unauthorised.'))
+    except PermissionDenied as e:
+        return HttpResponseBadRequest(_(str(e)))
+    except Exception as e:
+        print 'unitUnFireHtml Exception', e
+        return HttpResponseBadRequest(_('Error un-firing character. Please retry.'))
 
 def unitBuyHTML(request, unit_id, item_id):
     try:

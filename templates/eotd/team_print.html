@@ -30,7 +30,7 @@
         <th>{% trans 'Cost' %}</th>
     </thead>
     <tbody>
-        {% for item in team.units.all %}
+        {% for item in team.activeUnits %}
         {% if forloop.counter|divisibleby:"2" %}
         <tr>
         {% else %}

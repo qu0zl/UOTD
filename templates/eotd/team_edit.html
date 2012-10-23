@@ -66,10 +66,10 @@ $(document).ready(function() {
             }
             });
         $(".medieval-slot").droppable({accept:".medieval-weapon"});
-        function fire_core(unit) {
+        function fire_core(unit, cmd) {
             $.ajax({
                 type: 'POST',
-                url: "/eotd/unit/"+unit+"/fire/",
+                url: "/eotd/unit/"+unit+"/"+cmd+"/",
                 dataType: "json",
                 success: handleInner,
                 error: function(msg){
@@ -77,15 +77,19 @@ $(document).ready(function() {
                 }
             });
         }
+        $('.unretire_button').click(function() {
+            fire_core($(this).val().split('_')[0], "unretire");
+            return false;
+        });
         $('.unhire_button').click(function() {
             if (confirm("{% trans 'Please confirm that you wish to cancel hiring this character.' %}")) {
-                fire_core($(this).val().split('_')[0]);
+                fire_core($(this).val().split('_')[0], "fire");
             }
             return false;
         });
         $('.retire_button').click(function() {
             if (confirm("{% trans 'Are you certain you want to retire this character?\nYou will not be able to reverse this decision after playing your next game.' %}"))
-                fire_core($(this).val().split('_')[0]);
+                fire_core($(this).val().split('_')[0], "fire");
             return false;
         });
         $('.purchase_button').click(function() {
