@@ -1,0 +1,1 @@
+[{"pk": 1, "model": "eotd.skilllist", "fields": {"skills": [6, 7, 8, 9, 10, 11], "name": "Holy Order Spell List"}}, {"pk": 2, "model": "eotd.skilllist", "fields": {"skills": [14, 15, 16, 17, 18], "name": "Nosferatu Spell List"}}, {"pk": 3, "model": "eotd.skilllist", "fields": {"skills": [8, 19, 20, 21, 22], "name": "Gentlemen's Club Spell List"}}]
