@@ -57,4 +57,32 @@
     {% endfor %}
     </tbody>
 </table>
+<div style="height:20px;"></div>
+<h3>{% trans 'Weapons' %}</h3>
+<table>
+    <thead>
+        <th></th>
+        <th>Strength</th>
+        <th>Short</th>
+        <th>Medium</th>
+        <th>Long</th>
+        <th>Hands</th>
+    </thead>
+    <tbody>
+        {% for weapon in team.activeWeapons %}
+        {% if forloop.counter|divisibleby:"2" %}
+        <tr>
+        {% else %}
+        <tr class="shade">
+        {% endif %}
+            <td>{{weapon.name}}</td>
+            <td>{{weapon.strengthString}}</td>
+            <td>{{weapon.shortRange}}</td>
+            <td>{{weapon.mediumRange}}</td>
+            <td>{{weapon.longRange}}</td>
+            <td>{{weapon.hands}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 

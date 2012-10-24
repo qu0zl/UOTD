@@ -84,10 +84,10 @@ STAT_CHOICES = (
 )
 
 WEAPON_STRENGTH_CHOICES = (
-    (-11, _("Model's Strength - 1")),
-    (-2, _("Model's Strength + 2")),
-    (-1, _("Model's Strength + 1")),
-    (0, _("Model's Strength")),
+    (-11, _("Model Strength - 1")),
+    (-2, _("Model Strength + 2")),
+    (-1, _("Model Strength + 1")),
+    (0, _("Model Strength")),
     (1,  _('1')),
     (2,  _('2')),
     (3,  _('3')),
@@ -196,6 +196,11 @@ class Weapon(models.Model):
     mediumRange = models.SmallIntegerField(default=0, blank=True)
     longRange = models.SmallIntegerField(default=0, blank=True)
     strength = models.SmallIntegerField(choices=WEAPON_STRENGTH_CHOICES, default=5)
+    def strengthString(self):
+        for x,y in WEAPON_STRENGTH_CHOICES:
+            if x == self.strength:
+                return unicode(y)
+        return ''
 
 class Faction(models.Model):
     GOOD=1
@@ -577,6 +582,15 @@ class Team(models.Model):
     def deadUnits(self):
         nonRetired = Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
         return [x for x in nonRetired if x.isDead]
+    # List of weapons carried by active units
+    @property
+    def activeWeapons(self):
+        weapons = set()
+        for unit in self.activeUnits:
+            for weapon in unit.weapons:
+                if weapon.weapon:
+                    weapons.add(weapon)
+        return weapons
 
 class NewTeamForm(forms.ModelForm):
     campaignID = forms.IntegerField(label="", widget=forms.HiddenInput(), required=False)
