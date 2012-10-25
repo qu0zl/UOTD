@@ -496,6 +496,10 @@ class Unit(models.Model):
         else: # Mark as retired
             self.retiredTime=datetime.datetime.now()
             self.save()
+# Manager for Team object. Used to exclude retired teams by default
+class TeamManager(models.Manager):
+    def get_query_set(self):
+        return super(TeamManager, self).get_query_set().exclude(retired=True)
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -504,7 +508,13 @@ class Team(models.Model):
     coins = models.IntegerField(default=0)
     description = models.TextField(max_length=800, blank=True)
     store = models.ManyToManyField('Weapon', default=None, through='UnitWeapon', blank=True)
+    # Cannot delete a team that has played games
+    # So instead will mark it as retired and then no longer display it.
+    retired = models.BooleanField(default=False, blank=True)
     freezeTime = models.DateTimeField(null=True, blank=True)
+    objects = TeamManager() # Exclude retired teams by default.
+    all_objects = models.Manager() # The standard manager. Include all teams.
+
     def __unicode__(self):
         return self.name
     # Does this Team have a leader model
@@ -513,6 +523,18 @@ class Team(models.Model):
             if item.leader:
                 return True
         return False
+    @property
+    def hasPlayedGames(self):
+        return GameTeam.objects.filter(team=self).exists()
+    # If this team has played games then we will only flag them as retired rather than actually delete them
+    def deleteOrRetire(self):
+        if self.hasPlayedGames:
+            self.retired = True
+            self.save()
+        else:
+            for unit in self.units.all():
+                unit.delete()
+            self.delete()
     def canHire(self, unitTemplate):
         # Can we afford it
         if unitTemplate.cost > self.coins:

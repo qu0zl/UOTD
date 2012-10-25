@@ -32,6 +32,9 @@ $(document).ready(function() {
             }
         }
     });
+    $('#id_delete').click(function() {
+        return confirm("{%trans 'Are you certain that you wish to permenantly delete this team?'%}");
+    });
     function dynamic_elements(){
         $( "input:submit, .link, button" ).button();
 
@@ -247,7 +250,7 @@ $(document).ready(function() {
         <h1>{% trans "View team"%}</h1>
         </div>
         {% endif %}
-        <div style="float:right; display:inline-block;"><a class="link" href="/eotd/team/{{team.id}}/print/">Print view</a></div>
+        <div style="float:right; display:inline-block;"><a class="link" href="/eotd/team/{{team.id}}/print/">{% trans 'Print view' %}</a></div>
 
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
@@ -277,6 +280,7 @@ $(document).ready(function() {
                 <tbody>
                     <tr>
                         <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
+                        <td><a id="id_delete" class="link" href="/eotd/team/{{team.id}}/delete/">{% trans 'Delete Team' %}</a></td>
                     </tr>
                 </tbody>
             </table>

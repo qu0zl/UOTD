@@ -273,7 +273,10 @@ def newTeamSave(request):
     if request.user.is_authenticated() and request.method == 'POST': # If the form has been submitted... 
         print 'trying to make new team' 
         form = eotd.models.NewTeamForm(request.POST) # A form bound to the POST data
-        team = form.save() # save below after setting owner
+        try:
+            team = form.save() # save below after setting owner
+        except ValueError:
+            return HttpResponseForbidden(_('Unable to create new team. Did you select team faction?'))
         team.owner=request.user 
         team.save() 
         try:
@@ -590,3 +593,23 @@ def gameDelete(request, game_id):
     except Exception as e:
         print 'gameDelete Exception', e
         return HttpResponseBadRequest(_('Failed to delete game.'))
+
+def teamDelete(request, team_id, confirm=False):
+    try:
+        if request.user.is_authenticated():
+            team = eotd.models.Team.objects.get(id=team_id)
+            if team.owner == request.user:
+                # Check if this team has played games and we haven't confirmed delete
+                if not confirm and team.hasPlayedGames:
+                    return render_to_response('eotd/team_confirm_delete.html', \
+                        {
+                            'team':team,
+                        }, \
+                        RequestContext(request))
+                else:
+                    team.deleteOrRetire()
+                    return redirect('/eotd/team/')
+        return HttpResponseBadRequest(_('You are not authorized to delete this team.'))
+    except Exception as e:
+        print 'teamDelete Exception', e
+        return HttpResponseBadRequest(_('Failed to delete team.'))

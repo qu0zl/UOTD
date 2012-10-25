@@ -1,0 +1,27 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/campaign_1.0.0.css">
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Really?" %}{% endblock %}
+
+{% block body %}
+    <div style="width:100%; clear:both;">
+        </p>
+            <h3>{% trans 'Please confirm you wish to delete this team.' %}</h3>
+        </p>
+        <div class="leftDouble">
+            <a href="/eotd/team/{{team.id}}">{% trans 'Do not delete this team.' %}</a>
+        </div>
+
+        <div class="rightDouble">
+            <a href="/eotd/team/{{team.id}}/delete/confirm/">{% trans 'Do delete this team.' %}</a>
+        </div>
+    </div>
+
+{% endblock %}
