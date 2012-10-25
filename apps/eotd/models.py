@@ -532,8 +532,7 @@ class Team(models.Model):
             self.retired = True
             self.save()
         else:
-            for unit in self.units.all():
-                unit.delete()
+            self.units.all().delete()
             self.delete()
     def canHire(self, unitTemplate):
         # Can we afford it
@@ -631,6 +630,11 @@ class Game(models.Model):
     teams = models.ManyToManyField('Team', related_name='game_for_team', default=None, blank=True, through='GameTeam')
     date = models.DateField(_("Date"),default=datetime.date.today)
     campaign = models.ForeignKey('Campaign', related_name='games', null=True, default=None)
+    def deleteGame(self):
+        for gameTeam in self.gameteam_set.all():
+            gameTeam.gameunit_set.all().delete()
+            gameTeam.delete()
+        self.delete()
     def canEdit(self, user):
         if user:
             for team in self.teams.all():

@@ -587,7 +587,7 @@ def gameDelete(request, game_id):
             campaign = game.campaign
 
             if campaign.isAdmin(request.user):
-                game.delete()
+                game.deleteGame()
                 return redirect('/eotd/campaign/%s/' % campaign.id)
         return HttpResponseBadRequest(_('You are not authorized to delete this game.'))
     except Exception as e:
