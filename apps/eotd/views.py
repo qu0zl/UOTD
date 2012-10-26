@@ -33,6 +33,7 @@ def campaignForm(request, campaign_id):
             'campaign':campaign,
             'campaign_id':campaign_id,
             'edit':campaign_id == "0" or (request.user.is_authenticated() and campaign.isAdmin(request.user)),
+            'owner':campaign_id == "0" or (request.user.is_authenticated() and campaign.isOwner(request.user)),
             'formObject':form,
             'gameForm':gameForm,
             'userTeams':eotd.models.Team.objects.filter(owner=request.user) if request.user.is_authenticated() else None,
@@ -59,8 +60,10 @@ def campaignSave(request, campaign_id):
                     print 'Attempt by user %s to edit campaign owned by user %s' % (request.user, campaign.owner) 
                     return HttpResponseForbidden() 
                 if 'delete' in request.POST: 
-                    campaign.delete() 
-                    return HttpResponseRedirect('/eotd/campaign/')
+                    if campaign.deleteCampaign(request.user):
+                        return HttpResponseRedirect('/eotd/campaign/')
+                    else:
+                        return HttpResponseBadRequest(_('Only the owner of a campaign may delete it.'))
                 # update the pre-existing campaign
                 form = eotd.models.CampaignForm(request.POST, instance=campaign)
                 form.save()

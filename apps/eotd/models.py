@@ -40,13 +40,21 @@ class Campaign(models.Model):
     # campaign private? ie can others look at it
     def __unicode__(self):
         return u"%s:%s" % (self.id, self.name)
-
+    def isOwner(self, user):
+        return self.owner == user
     def isAdmin(self, user):
         print 'user is: %s, owner is %s' % (user, self.owner)
         if user == self.owner or user in self.admins.all():
             return True
         else:
             return False
+    # Delete the campaign but do not delete constituent games or it will affect team statuses
+    def deleteCampaign(self, user):
+        # Only the campaign owner may delete it. Not an ordinary admin.
+        if not self.isOwner(user):
+            return False
+        seld.delete()
+        return True
     # checks if the user is a player OR the owner. Owner is considered a player automatically.
     def isPlayer(self, user):
         if user in self.players.all() or user == self.owner:

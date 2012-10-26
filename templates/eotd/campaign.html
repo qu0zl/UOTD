@@ -23,6 +23,22 @@
     $(document).ready(function() {
         $( "#id_date" ).datepicker();
         $( "input:submit, .link, button" ).button();
+        $('.delete_game').click(function() {
+            return confirm("{%trans 'Are you certain that you wish to permenantly delete this game?\nThis cannot be un-done.'%}");
+        });
+        $('#id_delete').click(function() {
+            if (confirm("{%trans 'Are you certain that you wish to permenantly delete this campaign?\nThis cannot be un-done.'%}")) {
+                {% if campaign.games.all.exists %}
+                return confirm("{% trans 'Really? This will also permenantly delete all campaign games.\nAre you certain?'%}");
+                {% else %}
+                return true;
+                {% endif %}
+            }
+            return false;
+
+
+
+        });
     });
 </script>
 {% endblock extra_head %}
@@ -74,13 +90,15 @@
             </div>
         </div>
 
-        {% if campaign_id == '0' or edit %}
+        {% if edit %}
         <div style="width=100%; display:block; clear:both;">
             <table class="ui-widget">
                 <tbody class="ui-widget-content">
                     <tr>
                         <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
+                        {% if campaign_id != '0' and owner %}
                         <td> <button name="delete" type="submit" id="id_delete">{% trans "delete" %}</button> </td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -163,7 +181,7 @@
                             {% endfor %}
                             <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
                             {% if edit %}
-                            <td><a class="link" href="/eotd/game/{{game.id}}/delete/">{% trans "Delete game" %}</a></td>
+                            <td><a class="link delete_game" href="/eotd/game/{{game.id}}/delete/">{% trans "Delete game" %}</a></td>
                             {% endif %}
                         </tr>
                         {% endfor %}
