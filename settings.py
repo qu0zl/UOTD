@@ -176,6 +176,9 @@ INSTALLED_APPS = [
     # project
     "eotd",
     "profiles",
+
+    # template debugger shell
+    "template_repl",
 ]
 
 FIXTURE_DIRS = [

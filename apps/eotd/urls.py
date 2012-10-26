@@ -1,9 +1,8 @@
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 
-
 urlpatterns = patterns("",
-    url(r"^$", direct_to_template, {"template": "eotd/eotd.html"}, name="eotd"),
+        url(r"^$", direct_to_template, {"template": "eotd/eotd.html"}, name="eotd"),
     url(r"^terms/$", direct_to_template, {"template": "eotd/terms.html"}, name="terms"),
     url(r"^privacy/$", direct_to_template, {"template": "eotd/privacy.html"}, name="privacy"),
     url(r"^dmca/$", direct_to_template, {"template": "eotd/dmca.html"}, name="dmca"),
@@ -37,5 +36,6 @@ urlpatterns = patterns("",
     (r'^game/(\d+)/update/$', 'eotd.views.gameUpdate'),
     (r'^game/(\d+)/delete/$', 'eotd.views.gameDelete'),
     (r'^game/(\d+)/units/$', 'eotd.views.gameUnits'),
+    (r'^stats/recent/$', 'eotd.views.statsRecent'),
     (r'^weapon/(?P<team_id>\d+)/move/$', 'eotd.views.weaponMove'),
 )

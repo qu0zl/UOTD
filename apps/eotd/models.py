@@ -718,9 +718,3 @@ class GameFormLine(forms.ModelForm):
     class Meta:
         model = GameTeam
         fields = ['team','victoryPoints','earnings']
-
-#class GameFormLine(forms.Form):
-#    team = forms.CharField()
-#    victoryPoints = forms.IntegerField()
-#    earnings = forms.IntegerField()
-#    teamID = forms.IntegerField(widget=forms.widgets.HiddenInput())

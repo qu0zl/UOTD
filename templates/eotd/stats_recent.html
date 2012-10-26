@@ -1,0 +1,26 @@
+{% load i18n %}
+<style>
+    .names { margin:1px;padding-left:4px;padding-right:4px; padding-bottom: 1px; padding-top:1px; text-align:center; font-size:18px; font-weight:bold;}
+    .scores { margin:1px;padding-left:4px;padding-right:4px; text-align:center; font-size:16px;}
+    .rows { margin:1px; padding:0px; }
+</style>
+<table>
+    {% for game in recentGames %}
+<tr class="rows">
+    {% for team in game.gameteam_set.all %}
+    {% if forloop.counter > 1 %}
+    <td class="names"></td>
+    {% endif %}
+    <td class="names"><a style="font:large;" href="/eotd/team/{{team.team.id}}/">{{team.team}}</a></td>
+    {% endfor %}
+</tr>
+<tr class="rows">
+    {% for team in game.gameteam_set.all %}
+    {% if forloop.counter > 1 %}
+    <td class="scores">V</td>
+    {% endif %}
+    <td class="scores">{{team.victoryPoints}}</td>
+    {% endfor %}
+</tr>
+{%endfor%}
+</table>

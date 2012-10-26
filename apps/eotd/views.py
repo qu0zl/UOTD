@@ -616,3 +616,14 @@ def teamDelete(request, team_id, confirm=False):
     except Exception as e:
         print 'teamDelete Exception', e
         return HttpResponseBadRequest(_('Failed to delete team.'))
+
+def statsRecent(request):
+    try:
+        # Games that are fully frozen - ie they have been updated for each team involved.
+        return render_to_response('eotd/stats_recent.html', \
+            {
+                'recentGames':eotd.models.Game.objects.exclude(gameteam_set__freezeTime=None).order_by("-date")[:3],
+            }, \
+            RequestContext(request))
+    except:
+        return HttpResponseBadRequest(_('Unable to display recent games.'))
