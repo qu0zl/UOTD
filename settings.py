@@ -153,6 +153,8 @@ INSTALLED_APPS = [
     
     # theme
     "pinax_theme_bootstrap",
+
+    "django_forms_bootstrap",
     
     # external
     "notification", # must be first
