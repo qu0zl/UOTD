@@ -43,7 +43,6 @@ class Campaign(models.Model):
     def isOwner(self, user):
         return self.owner == user
     def isAdmin(self, user):
-        print 'user is: %s, owner is %s' % (user, self.owner)
         if user == self.owner or user in self.admins.all():
             return True
         else:
@@ -362,7 +361,6 @@ class Unit(models.Model):
 
     def addWeapon(self, weapon_id):
         weapon = Weapon.objects.get(id=weapon_id)
-        print 'allowedWeaponed says',self.allowedWeapon(weapon)
         newWeapon = UnitWeapon(weapon=weapon, unit=self)
         newWeapon.save()
         self.team.coins = self.team.coins - weapon.cost
@@ -374,7 +372,6 @@ class Unit(models.Model):
         cost = self.baseUnit.cost
         for item in self.unitWeapons.all():
             cost = cost +item.cost
-        print cost
         return cost
     @property
     def medieval(self):
@@ -558,14 +555,12 @@ class Team(models.Model):
         if not self.canHire(unitTemplate):
             raise Exception('Unable to hire this unit.')
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
-        print 'unit unitOrder is', unit.unitOrder
         unit.save()
         self.adjustCoins(unitTemplate.cost * -1)
         return self.coins
     def reorder(self, order):
         try:
             for i, item in enumerate(order,1):
-                print i, item
                 unit = self.units.get(id=item)
                 unit.unitOrder=i
                 unit.save()
