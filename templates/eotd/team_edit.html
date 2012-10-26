@@ -33,7 +33,7 @@ $(document).ready(function() {
         }
     });
     $('#id_delete').click(function() {
-        return confirm("{%trans 'Are you certain that you wish to permenantly delete this team?'%}");
+        return confirm("{%trans 'Are you certain that you wish to permenantly delete this faction?'%}");
     });
     function dynamic_elements(){
         $( "input:submit, .link, button" ).button();
@@ -220,7 +220,7 @@ $(document).ready(function() {
                 data: {'order':$(this).sortable('toArray')},
                 dataType: "json",
                 failure: function(data){
-                    alert("{%trans 'Unable to save updated team order.' %}");
+                    alert("{%trans 'Unable to save updated faction order.' %}");
                 },
             });
             }
@@ -234,9 +234,9 @@ $(document).ready(function() {
 {% block head_title %}
 
 {% if edit %}
-{% trans "Edit Team" %}
+{% trans "Edit Faction" %}
 {% else %}
-{% trans "View Team" %}
+{% trans "View Faction" %}
 {% endif %}
 {% endblock %}
 
@@ -245,9 +245,9 @@ $(document).ready(function() {
         {{ formset.management_form }}
         <div style="float:left; display:inline-block;">
         {% if edit %}
-        <h1>{% trans "Edit team"%}</h1>
+        <h1>{% trans "Edit faction"%}</h1>
         {% else %}
-        <h1>{% trans "View team"%}</h1>
+        <h1>{% trans "View faction"%}</h1>
         </div>
         {% endif %}
         <div style="float:right; display:inline-block;"><a class="link" href="/eotd/team/{{team.id}}/print/">{% trans 'Print view' %}</a></div>
@@ -280,7 +280,7 @@ $(document).ready(function() {
                 <tbody>
                     <tr>
                         <td> <button name="save" type="submit">{% trans "Save" %}</button> </td>
-                        <td><a id="id_delete" class="link" href="/eotd/team/{{team.id}}/delete/">{% trans 'Delete Team' %}</a></td>
+                        <td><a id="id_delete" class="link" href="/eotd/team/{{team.id}}/delete/">{% trans 'Delete Faction' %}</a></td>
                     </tr>
                 </tbody>
             </table>

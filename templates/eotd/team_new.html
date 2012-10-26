@@ -8,13 +8,13 @@
 
 {% load ifsetting_tag %}
 
-{% block head_title %}{% trans "Create New Team" %}{% endblock %}
+{% block head_title %}{% trans "Create New Faction" %}{% endblock %}
 
 {% block body %}
         {% if user.is_authenticated %}
         <form method="post" id="formObject" action="/eotd/team/0/save/" enctype="multipart/form-data"> {% csrf_token %}
         {{ formset.management_form }}
-        <h1>{% trans "Create new team"%}</h1>
+        <h1>{% trans "Create new faction"%}</h1>
         <div style="width:100%; clear:both;">
             <div class="leftDouble">
                 <table>
@@ -48,7 +48,7 @@
         </form>
 
         {% else %}
-        <h1>{% trans "You must login to create a new team."%}</h1>
+        <h1>{% trans "You must login to create a new faction."%}</h1>
         {% endif %}
 
 

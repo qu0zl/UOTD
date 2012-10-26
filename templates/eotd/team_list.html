@@ -70,10 +70,10 @@
 
 {% load ifsetting_tag %}
 
-{% block head_title %}{% trans "List Teams" %}{% endblock %}
+{% block head_title %}{% trans "List Factions" %}{% endblock %}
 
 {% block body %}
-<h1>{% trans "Teams" %}</h1>
+<h1>{% trans "Factions" %}</h1>
 {% comment %} greg fix this
 <div>
     <h4>{% trans "Filter by:" %}
@@ -99,10 +99,10 @@
         {% if teams %}
             {% include 'eotd/team_list_table.html' %}
             {% else %}
-            <tr><td>No</td><td>teams</td></tr>
+            <tr><td>No</td><td>factions</td></tr>
             {%comment%}
             greg make this fit the number of cells once you know what it is
-            <tr><td>No</td><td>teams.</td><td>Check</td><td>your</td><td>default</td><td>filter</td><td>settings.</td></tr>
+            <tr><td>No</td><td>factions.</td><td>Check</td><td>your</td><td>default</td><td>filter</td><td>settings.</td></tr>
             {%endcomment %}
         {% endif %}
     </tbody>

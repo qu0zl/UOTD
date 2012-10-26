@@ -111,13 +111,13 @@
 
         {% if campaign_id != '0' %}
         <div style="width=100%; display:block; clear:both;">
-            <h1>{% trans 'Teams' %}</h1>
+            <h1>{% trans 'Factions' %}</h1>
             <table class="ui-widget">
                 <thead class="ui-widget-header">
                 <tr>
                     <th>{% trans 'Name' %}</th>
                     <th>{% trans 'Owner' %}</th>
-                    <th>{% trans 'Team value' %}</th>
+                    <th>{% trans 'Faction value' %}</th>
                 </tr>
                 </thead>
                 <tbody class="ui-widget-content">
@@ -145,7 +145,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td> <button name="addTeam" type="submit">{% trans "Add pre-existing team" %}</a></button>
+                            <td> <button name="addTeam" type="submit">{% trans "Add pre-existing faction" %}</a></button>
                                 <select name="addPriorTeam">
                                     <option value="" selected>----</option>
                                     {% for team in userTeams %}
@@ -156,7 +156,7 @@
 
                                 </select>
                             </td>
-                            <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/" >{% trans "Create new team for this campaign" %}</a></button> </td>
+                            <td> <button name="createTeam" type="submit"><a href="/eotd/team/0/" >{% trans "Create new faction for this campaign" %}</a></button> </td>
                         </tr>
                         {% endif %}
                     </tbody>
