@@ -171,6 +171,8 @@ class Skill(models.Model):
         (ARCANE, _('Arcane')),
         (COMBAT, _('Combat')),
     )
+    class Meta:
+        ordering=['name']
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)
@@ -701,6 +703,7 @@ class GameUnitLine(forms.Form):
     # I need ModelMultipleChoiceField to be able to add multiple skills to a model in a single game
     # However, I'm leaving this for now. I'm beginning to wonder if this is a django regression.
     #skills = forms.ModelMultipleChoiceField(queryset=Skill.objects.all(), widget=forms.CheckboxSelectMultiple())
+    # Skill choices need to be limited based on the unit being displayed
     skills = forms.ModelChoiceField(Skill.objects.all())
     injuries = forms.ModelChoiceField(Injury.objects.all())
     name = forms.CharField()

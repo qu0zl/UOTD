@@ -506,6 +506,13 @@ def gameForm(request, game_id):
                 #greg gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
                 line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
                     "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries.get() if unit.injuries.count() == 1 else None, "summary":unit.unit.gearAsString} )
+
+                # Work out the possible skills this unit can gain
+                skillSet=eotd.models.Skill.objects.filter(id=-1) # get an empty Skill queryset
+                for skillList in unit.unit.baseUnit.skillLists.all():
+                    skillSet = skillSet|skillList.skills.all()
+                line.fields['skills'].queryset=skillSet
+
                 inner.append( line)
             units.append(inner)
         # greg confirm what happens with a logged out user calling canEdit below?
