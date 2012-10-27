@@ -484,8 +484,7 @@ def unitBuyHTML(request, unit_id, item_id):
                         'unit':unit,
                         }, \
                     RequestContext(request))
-            else:
-                return HttpResponseBadRequest(_('User unauthorised.'))
+        return HttpResponseBadRequest(_('User unauthorised.'))
     except PermissionDenied as e:
         return HttpResponseBadRequest(_(str(e)))
     except Exception as e:
