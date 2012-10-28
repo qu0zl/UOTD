@@ -329,16 +329,14 @@ def teamHire(request, team_id, unit_id):
                 return HttpResponseForbidden(_('You are not authorized to edit this team. Are you logged in correctly?') )
             try:
                 coins = team.hire(unitTemplate)
-            except Exception as e:
+            except PermissionDenied as e:
                 print 'team.hire exception:', unicode(e)
                 return HttpResponseBadRequest(unicode(e))
         except Exception as e:
-            print 'greg, exception caught in teamHire', e
+            print 'Exception caught in teamHire', e
     else:
         return HttpResponseForbidden(_('You are not logged in.'))
     return HttpResponseRedirect('/eotd/team/%s/' % team_id)
-
-        # greg work for ajax and request.method == 'POST':
 
 def teamReorder(request, team_id):
     if request.is_ajax() and request.user.is_authenticated() and request.method == 'POST':
@@ -444,14 +442,28 @@ def unitInjuryHTML(request, unit_id):
             unit = eotd.models.Unit.objects.get(id=unit_id)
             return render_to_response('eotd/unit_injuries.html', \
                 {
-                    'injuries':unit.gameunit_set.exclude(gameunitinjury__injury=None).filter(gameunitinjury__healed=False),
-                    'healed':unit.gameunit_set.exclude(gameunitinjury__injury=None).exclude(gameunitinjury__healed=True),
+                    'injuries':eotd.models.GameUnitInjury.objects.filter(gameUnit__unit=unit, healed=False),
+                    'healed':eotd.models.GameUnitInjury.objects.filter(gameUnit__unit=unit, healed=True),
                     'unit':unit,
                 }, \
                 RequestContext(request))
     except Exception as e:
         print 'unitInjuryHTML Exception', e
         return HttpResponseBadRequest(_('Failed to retrieve injury details.'))
+
+def unitHealHTML(request, unit_id, injury_id):
+    try:
+        if request.is_ajax() and request.user.is_authenticated():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            if request.user == unit.team.owner:
+                unit.heal(injury_id, int(request.POST['doctor']))
+                return unitInjuryHTML(request, unit_id)
+        return HttpResponseBadRequest(_('User unauthorised.'))
+    except PermissionDenied as e:
+        return HttpResponseBadRequest(_(str(e)))
+    except Exception as e:
+        print 'unitHealHtml Exception', e
+        return HttpResponseBadRequest(_('Error healing injury. Please retry.'))
 
 def unitFireHTML(request, unit_id):
     try:

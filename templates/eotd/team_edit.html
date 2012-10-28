@@ -141,9 +141,11 @@ $(document).ready(function() {
         var source = $(this).val().split('_');
         var unit = source[0];
         var injury = source[1];
+        var doc = $("#inj_"+injury).val();
         $.ajax({
             type: 'POST',
             url: "/eotd/unit/"+unit+"/injuries/"+injury+"/",
+            data: {'doctor':doc},
             success: function(msg){
                 if (event.data.close)
                     $("#injury_dialog").dialog('close');

@@ -151,13 +151,32 @@ class GameUnitInjury(models.Model):
         (3, _('Harley Street specialist')),
         (10, _('Free/Healing Hands')),
     )
-    def __unicode__(self):
-        return u'%s: %shealed' % (self.injury.name, '' if self.healed else 'not ')
+    DOCTOR_COSTS={
+        0:0,
+        1:4,
+        2:8,
+        3:12
+    }
     healed = models.BooleanField(default=False)
     doctor = models.SmallIntegerField(choices=DOCTOR_CHOICES, default=0, blank=False)
     injury = models.ForeignKey(Injury)
     gameUnit = models.ForeignKey('GameUnit')
     date = models.DateField(_("Date"),default=None, blank=True, null=True)
+    def __unicode__(self):
+        return u'%s: %shealed' % (self.injury.name, '' if self.healed else 'not ')
+    def cost(self, doctorType=None):
+        if not doctorType:
+            doctorType=self.doctor
+        doctorCost=GameUnitInjury.DOCTOR_COSTS[doctorType]
+        # Check if we should get the 'Sons of the Empire' specialist doctor discount.
+        if doctorType == 3 and self.gameUnit.unit.team.faction.name.lower()=='sons of the empire':
+            doctorCost = doctorCost - 2
+
+        # if doctor is specialist and we're a Sons of the Empire faction then reduce cost by 2
+        return doctorCost
+    @property
+    def doctorString(self):
+        return GameUnitInjury.DOCTOR_CHOICES[self.doctor][1]
 
 class Skill(models.Model):
     STRENGTH=1
@@ -370,6 +389,16 @@ class Unit(models.Model):
                     raise PermissionDenied("May only use medieval weapons.")
         raise PermissionDenied("Illegal weapon choice")
 
+    def heal(self, injury_id, doctor):
+        injury = GameUnitInjury.objects.get(id=injury_id, gameUnit__unit=self, healed=False)
+        cost = injury.cost(doctor)
+        if cost > self.team.coins:
+            return False
+        injury.healed = True
+        injury.doctor = doctor
+        injury.date = datetime.datetime.today()
+        self.team.adjustCoins(cost * -1)
+        injury.save()
     def addWeapon(self, weapon_id):
         weapon = Weapon.objects.get(id=weapon_id)
         newWeapon = UnitWeapon(weapon=weapon, unit=self)
@@ -553,10 +582,10 @@ class Team(models.Model):
     def canHire(self, unitTemplate):
         # Can we afford it
         if unitTemplate.cost > self.coins:
-            raise Exception(_("Unable to afford this unit."))
+            raise PermissionDenied(_("Unable to afford this unit."))
         # Not allowed two leaders
         if unitTemplate.leader and self.hasLeader():
-            raise Exception(_("Only one leader model allowed."))
+            raise PermissionDenied(_("Only one leader model allowed."))
         # Only allowed have 1/3rd (rounding-up) of models be heroes
         if unitTemplate.hero:
             heroCount = self.units.filter(baseUnit__hero=True).count()
@@ -565,16 +594,16 @@ class Team(models.Model):
             if maxHeroCount == 0:
                 maxHeroCount = 1
             if heroCount+1 > maxHeroCount:
-                raise Exception(_("Would exceed 1/3rd heroes faction composition limit."))
+                raise PermissionDenied(_("Would exceed 1/3rd heroes faction composition limit."))
         # Not allowed exceed maximum number of certain models
         if unitTemplate.maxCount > 0:
             if self.units.filter(baseUnit=unitTemplate).count() >= unitTemplate.maxCount:
-                raise (_("Would exceed maximum number of this unit type allowed."))
+                raise PermissionDenied(_("Would exceed maximum number of this unit type allowed."))
         return True
     def hire(self, unitTemplate):
         # will raise exception carrying message explaining the problem.
         if not self.canHire(unitTemplate):
-            raise Exception('Unable to hire this unit.')
+            raise PermissionDenied('Unable to hire this unit.')
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
         unit.save()
         self.adjustCoins(unitTemplate.cost * -1)

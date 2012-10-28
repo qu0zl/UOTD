@@ -3,9 +3,9 @@
 {% if injuries.exists %}
     {% for injury in injuries.all %}
     <div class="ui-widget-content injury_select">
-        {{injury.injuries.get}}
+        {{injury.injury.name}}
         <select name="inj_{{injury.id}}" id="inj_{{injury.id}}">
-            {% for x,y in injury.gameunitinjury_set.get.DOCTOR_CHOICES%}
+            {% for x,y in injury.DOCTOR_CHOICES%}
             <option value="{{x}}" {% if forloop.first %}selected{% endif %}>{{y}}</option>
             {% endfor %}
         </select>
@@ -15,4 +15,12 @@
     {% endfor %}
     {% else %}
     <p><h3>{% trans 'No injuries.' %}</h3></p>
+    {% endif %}
+{% if healed.exists %}
+    <span><h3>{% trans 'Healed injuries' %}</h3></span>
+    {% for injury in healed %}
+    <div class="ui-widget-content">
+        {{injury.injury.name}}; {{injury.doctorString}}; {{injury.date}} ({{injury.cost}} Schillings)
+    </div>
+    {% endfor %}
 {% endif %}
