@@ -4,4 +4,21 @@
     {% if profile.about %}<p><b>{% trans "About" %}</b>: {{ profile.about }}</p>{% endif %}
     {% if profile.location %}<p><b>{% trans "Location" %}</b>: {{ profile.location }}</p>{% endif %}
     {% if profile.website %}<p><b>{% trans "Website" %}</b>: <a href="{{ profile.website }}">{{ profile.website }}</a></p>{% endif %}
+    {% if profile.user.team_set.exists %}
+        <table>
+            <thead>
+                <th>{% trans 'Name' %}</th>
+                <th>{% trans 'Faction' %}</th>
+                <th>{% trans 'Standings' %}</th>
+            </thead>
+            {% with teams=profile.user.team_set.all noOwner=1 %}
+            {% include 'eotd/team_list_table.html' %}
+            {% endwith %}
+        </table>
+        {% endif %}
+        {% if profile.user.campaign_player_table.exists %}
+        {% with campaigns=profile.user.campaign_player_table.all %}
+        {% include 'eotd/campaign_list_table.html' %}
+        {% endwith %}
+    {% endif %}
 </div>

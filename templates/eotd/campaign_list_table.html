@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if campaigns %}
+<h1>{% trans "Campaigns" %}</h1>
+<table id="id_campaign_table">
+<thead> 
+<tr> 
+    <th>{% trans 'Name' %}</th> 
+    <th>{% trans 'Owner' %}</th> 
+    <th>{% trans 'Size' %}</th> 
+</tr> 
+</thead> 
+    <tbody>
+    {% for item in campaigns %}
+    <tr><td><a href="/eotd/campaign/{{item.id}}/">{{item.name}}</a></td>
+        <td><a href="/profiles/profile/{{item.owner}}/">{{item.owner}}</a></td>
+        <td>{{item.coins}}</td>
+    </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

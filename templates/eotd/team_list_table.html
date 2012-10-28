@@ -1,7 +1,9 @@
 {% load i18n %}
 {% for item in teams %}
-    <tr><td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
+<tr><td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
+    {% if noOwner != 1 %}
         <td>{{item.owner}}</td>
+    {% endif %}
         <td>{{item.faction}}</td>
         <td>{{item.value}}</td>
     </tr>
