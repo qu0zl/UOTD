@@ -121,7 +121,7 @@
                 </tr>
                 </thead>
                 <tbody class="ui-widget-content">
-                    {% for item in campaign.teams.all %}
+                    {% for item in campaign.teamsByStanding %}
                     <tr>
                         <td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
                         <td><a href="/profiles/profile/{{item.owner}}/">{{item.owner}}</a></td>

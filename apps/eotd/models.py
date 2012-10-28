@@ -47,6 +47,8 @@ class Campaign(models.Model):
             return True
         else:
             return False
+    def teamsByStanding(self):
+        return sorted(self.teams.all(), key=lambda a: a.value, reverse=True)
     # Delete the campaign but do not delete constituent games or it will affect team statuses
     def deleteCampaign(self, user):
         # Only the campaign owner may delete it. Not an ordinary admin.
