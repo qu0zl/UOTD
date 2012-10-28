@@ -2,7 +2,7 @@
 {% for item in teams %}
 <tr><td><a href="/eotd/team/{{item.id}}/">{{item.name}}</a></td>
     {% if noOwner != 1 %}
-        <td>{{item.owner}}</td>
+    <td><a href="/profiles/profile/{{item.owner}}/">{{item.owner}}</a></td>
     {% endif %}
         <td>{{item.faction}}</td>
         <td>{{item.value}}</td>
