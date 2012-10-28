@@ -115,9 +115,16 @@ $(document).ready(function() {
         dynamic_elements();
     }
     dynamic_elements();
+    function update_injury_dialog_html(html){
+        $("#injury_dialog").html(html);
+        $(".heal-button, .heal-and-close-button" ).button();
+        $('.heal-button').click({close:false},heal_click);
+        $('.heal-and-close-button').click({close:true},heal_click);
+        //greg buttonify any buttons
+    }
     function update_purchase_dialog_html(html){
         $("#purchase_dialog").html(html);
-        $( ".equip-button, .equip-and-close-button" ).button();
+        $(".equip-button, .equip-and-close-button" ).button();
         $('.equip-button').click({close:false},equip_click);
         $('.equip-and-close-button').click({close:true},equip_click);
     }
@@ -129,6 +136,26 @@ $(document).ready(function() {
             dataType: "json",
             success: handleInner,
             });
+    }
+    function heal_click(event){
+        var source = $(this).val().split('_');
+        var unit = source[0];
+        var injury = source[1];
+        $.ajax({
+            type: 'POST',
+            url: "/eotd/unit/"+unit+"/injuries/"+injury+"/",
+            success: function(msg){
+                if (event.data.close)
+                    $("#injury_dialog").dialog('close');
+                else
+                    update_injury_dialog_html(msg);
+                background_inner();
+            },
+            error: function(msg){
+                alert(msg.responseText);
+            }
+        });
+        return false;
     }
     function equip_click(event){
         var source = $(this).val().split('_');
@@ -151,6 +178,34 @@ $(document).ready(function() {
         });
         return false;
     }
+    $("#injury_dialog").dialog({
+        width: 640,
+        height: 320,
+        bgiframe: true,
+        autoOpen: false,
+        modal: true,
+        buttons: {
+            {% trans "'Close'"%}: function(){
+                $(this).dialog('close');
+            }
+        },
+        open: function(event){
+            $.ajax({
+                type: 'POST',
+                url: "/eotd/unit/"+$('#'+$(this).data('caller').id).val()+"/injuries/",
+                context: $(this),
+                success: function(msg){
+                    update_injury_dialog_html(msg);
+                    return false;
+                },
+                error: function(msg) {
+                    $("#injury_dialog").dialog('close');
+                    alert(" {% trans 'Error' %}");
+                },
+            });
+        },
+    });
+
     $("#purchase_dialog").dialog({
         width: 480,
         height: 320,
@@ -186,7 +241,12 @@ $(document).ready(function() {
         autoOpen: false,
         modal: true,
         buttons: {
-            '{% trans 'Update Name' %}': function(){
+            'View Injuries': function(){
+                $(this).dialog('close');
+                $("#injury_dialog").data('caller', $(this).data('caller')).dialog('open');
+                return false;
+            },
+            '{% trans "Update Name" %}': function(){
                 $.ajax({
                     type: 'POST',
                     url: "/eotd/unit/"+$('#'+$(this).data('caller').id).val()+"/rename/",
@@ -198,7 +258,7 @@ $(document).ready(function() {
                         $(this).dialog('close');
                     }
                 });
-            },
+                },
             'Cancel': function(){
                 $(this).dialog('close');
             }
@@ -309,6 +369,9 @@ $(document).ready(function() {
         </div>
         {% endif %}
 
-        <div id="name_dialog" title="{%trans 'Change name'%}" style="display:none"><input type="text" id="name_input"></input></div>
+        <div id="name_dialog" title="{%trans 'Change name'%}" style="display:none">
+            <input type="text" id="name_input"></input>
+        </div>
         <div id="purchase_dialog" title="{%trans 'Purchase equipment' %}" style="display:none"></div>
+        <div id="injury_dialog" title="{%trans 'Heal injury' %}" style="display:none"></div>
 {% endblock %}

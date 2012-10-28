@@ -1,0 +1,18 @@
+{% load i18n %}
+{% load repl %}
+{% if injuries.exists %}
+    {% for injury in injuries.all %}
+    <div class="ui-widget-content injury_select">
+        {{injury.injuries.get}}
+        <select name="inj_{{injury.id}}" id="inj_{{injury.id}}">
+            {% for x,y in injury.gameunitinjury_set.get.DOCTOR_CHOICES%}
+            <option value="{{x}}" {% if forloop.first %}selected{% endif %}>{{y}}</option>
+            {% endfor %}
+        </select>
+    <button class="heal-button" value="{{unit.id}}_{{injury.id}}">{% trans 'Mark as healed.' %}</button>
+    <button class="heal-and-close-button" value="{{unit.id}}_{{injury.id}}">{% trans 'Mark healed & Close' %}</button>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p><h3>{% trans 'No injuries.' %}</h3></p>
+{% endif %}

@@ -330,8 +330,8 @@ def teamHire(request, team_id, unit_id):
             try:
                 coins = team.hire(unitTemplate)
             except Exception as e:
-                print 'team.hire exception:', e
-                return HttpResponseBadRequest(_('You are not allowed hire this model. Check cost, multiple-leaders, etc.'))
+                print 'team.hire exception:', unicode(e)
+                return HttpResponseBadRequest(unicode(e))
         except Exception as e:
             print 'greg, exception caught in teamHire', e
     else:
@@ -437,6 +437,21 @@ def unitEquipHTML(request, unit_id):
     except Exception as e:
         print 'unitEquipHTML Exception', e
         return HttpResponseBadRequest(_('Failed to retrieve equipment options.'))
+
+def unitInjuryHTML(request, unit_id):
+    try:
+        if request.is_ajax():
+            unit = eotd.models.Unit.objects.get(id=unit_id)
+            return render_to_response('eotd/unit_injuries.html', \
+                {
+                    'injuries':unit.gameunit_set.exclude(gameunitinjury__injury=None).filter(gameunitinjury__healed=False),
+                    'healed':unit.gameunit_set.exclude(gameunitinjury__injury=None).exclude(gameunitinjury__healed=True),
+                    'unit':unit,
+                }, \
+                RequestContext(request))
+    except Exception as e:
+        print 'unitInjuryHTML Exception', e
+        return HttpResponseBadRequest(_('Failed to retrieve injury details.'))
 
 def unitFireHTML(request, unit_id):
     try:

@@ -144,11 +144,20 @@ class Injury(models.Model):
     penalty = models.SmallIntegerField(choices=INJURY_PENALTIES, default=1, blank=False)
 
 class GameUnitInjury(models.Model):
+    DOCTOR_CHOICES=(
+        (0, '----'),
+        (1, _('Charlatan')),
+        (2, _('Local GP')),
+        (3, _('Harley Street specialist')),
+        (10, _('Free/Healing Hands')),
+    )
     def __unicode__(self):
         return u'%s: %shealed' % (self.injury.name, '' if self.healed else 'not ')
     healed = models.BooleanField(default=False)
+    doctor = models.SmallIntegerField(choices=DOCTOR_CHOICES, default=0, blank=False)
     injury = models.ForeignKey(Injury)
     gameUnit = models.ForeignKey('GameUnit')
+    date = models.DateField(_("Date"),default=None, blank=True, null=True)
 
 class Skill(models.Model):
     STRENGTH=1
@@ -544,16 +553,26 @@ class Team(models.Model):
     def canHire(self, unitTemplate):
         # Can we afford it
         if unitTemplate.cost > self.coins:
-            return False
+            raise Exception(_("Unable to afford this unit."))
         # Not allowed two leaders
         if unitTemplate.leader and self.hasLeader():
-            return False
+            raise Exception(_("Only one leader model allowed."))
+        # Only allowed have 1/3rd (rounding-up) of models be heroes
+        if unitTemplate.hero:
+            heroCount = self.units.filter(baseUnit__hero=True).count()
+            plebCount = self.units.filter(baseUnit__hero=False).count()
+            maxHeroCount = math.ceil(plebCount/2.0)
+            if maxHeroCount == 0:
+                maxHeroCount = 1
+            if heroCount+1 > maxHeroCount:
+                raise Exception(_("Would exceed 1/3rd heroes faction composition limit."))
         # Not allowed exceed maximum number of certain models
         if unitTemplate.maxCount > 0:
-            if team.count(unitTemplate) >= unitTemplate.maxCount:
-                return False
+            if self.units.filter(baseUnit=unitTemplate).count() >= unitTemplate.maxCount:
+                raise (_("Would exceed maximum number of this unit type allowed."))
         return True
     def hire(self, unitTemplate):
+        # will raise exception carrying message explaining the problem.
         if not self.canHire(unitTemplate):
             raise Exception('Unable to hire this unit.')
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
@@ -638,6 +657,8 @@ class Game(models.Model):
     def deleteGame(self):
         for gameTeam in self.gameteam_set.all():
             gameTeam.gameunit_set.all().delete()
+            # Remove their winnings
+            gameTeam.team.adjustCoins(gameTeam.earnings * -1)
             gameTeam.delete()
         self.delete()
     def canEdit(self, user):
