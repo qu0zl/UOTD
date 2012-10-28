@@ -740,6 +740,8 @@ class GameTeam(models.Model):
 
 # tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
 class GameUnit(models.Model):
+    class Meta:
+        ordering = ['unit__unitOrder']
     gameTeam = models.ForeignKey(GameTeam)
     unit = models.ForeignKey('Unit')
     skills = models.ForeignKey('Skill', related_name='game_unit_for_skill', default=None, blank=True, null=True)
