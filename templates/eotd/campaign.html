@@ -103,6 +103,29 @@
                 </tbody>
             </table>
         </div>
+        {% if campaign.campaignapplicant_set.exists %}
+        <div style="width=100%; display:block; clear:both;">
+            <h1>{% trans 'Campaign applicants' %}</h1>
+            <table class="ui-widget">
+                <thead class="ui-widget-header">
+                    <th>{% trans 'User' %}</th>
+                    <th>{% trans 'Application date' %}</th>
+                    <th></th>
+                    <th></th>
+                </thead>
+                <tbody class="ui-widget-content">
+                    {% for applicant in campaign.campaignapplicant_set.all %}
+                    <tr>
+                        <td><a class="link" href="/profiles/profile/{{applicant.user}}/">{{applicant.user}}</a></td>
+                        <td>{{applicant.creationTime}}</td>
+                        <td><a class="link" href="/eotd/campaign/applicant/{{applicant.id}}/approve">{% trans 'Approve' %}</a></td>
+                        <td><a class="link" href="/eotd/campaign/applicant/{{applicant.id}}/deny">{% trans 'Reject' %}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
         {% endif %}
 
 

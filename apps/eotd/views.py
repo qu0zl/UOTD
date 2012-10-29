@@ -173,7 +173,7 @@ def campaignApplicantHandler( request, applicant_id, what ):
         try:
             applicant = eotd.models.CampaignApplicant.objects.get(id=applicant_id)
             campaign = applicant.campaign
-            if campaign.is_admin(request.user):
+            if campaign.isAdmin(request.user):
                 if what == 'approve':
                     campaign.players.add(applicant.user)
                     campaign.save()
