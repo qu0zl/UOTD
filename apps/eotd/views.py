@@ -344,7 +344,6 @@ def teamReorder(request, team_id):
         if request.user == team.owner:
             order = request.POST.getlist('order[]')
             team.reorder(order)
-            print order
             return HttpResponse()
         else:
             return HttpResponseBadRequest(_('User unauthorised.'))
@@ -357,13 +356,10 @@ def unitName(request, unit_id):
         if request.is_ajax() and request.user.is_authenticated():
             unit = eotd.models.Unit.objects.get(id=unit_id)
             if request.user == unit.team.owner:
-                print 'trying to set name to', request.POST['name']
                 unit.name = request.POST['name']
                 unit.save()
                 return HttpResponse()
             else:
-                print request.user
-                print unit.owner
                 return HttpResponseBadRequest(_('User unauthorised.'))
     except Exception as e:
         print 'unitName Exception', e
@@ -559,20 +555,20 @@ def gameUpdate(request, game_id):
         if request.user.is_authenticated() and request.method == 'POST':
             game = eotd.models.Game.objects.get(id=game_id)
 
-            if not game.canEdit(request.user):
-                return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
-            team = eotd.models.Team.objects.get(id=int(request.POST['save']))
-            gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
-            oldEarnings = gameTeam.earnings
-            gameTeam.earnings = int(request.POST['earnings'])
-            earningsDiff = gameTeam.earnings - oldEarnings
-            gameTeam.victoryPoints = request.POST['victoryPoints']
-            gameTeam.save()
-            team.coins = team.coins+earningsDiff
-            team.save()
-            # Freeze the list of units used by this team in this game
-            gameTeam.freezeUnits()
-            return redirect('/eotd/game/%s/' % game_id)
+            if game.canEdit(request.user):
+                team = eotd.models.Team.objects.get(id=int(request.POST['save']))
+                gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
+                oldEarnings = gameTeam.earnings
+                gameTeam.earnings = int(request.POST['earnings'])
+                earningsDiff = gameTeam.earnings - oldEarnings
+                gameTeam.victoryPoints = request.POST['victoryPoints']
+                gameTeam.save()
+                team.coins = team.coins+earningsDiff
+                team.save()
+                # Freeze the list of units used by this team in this game
+                gameTeam.freezeUnits()
+                return redirect('/eotd/game/%s/' % game_id)
+        return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
     except Exception as e:
         print 'gameUpdate Exception', e
         return HttpResponseBadRequest(_('Failed to update game.'))
