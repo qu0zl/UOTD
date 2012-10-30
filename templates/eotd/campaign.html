@@ -213,6 +213,7 @@
             </div>
         {% endif %}
         {% if campaign_id != '0' and edit %}
+        <h2>{% trans 'Add new game' %}</h2>
         <form method="post" id="addGame" action="/eotd/campaign/{{campaign_id}}/game/" enctype="multipart/form-data"> {% csrf_token %}
             <div style="width=100%; display:block; clear:both;">
                 <table class="ui-widget">

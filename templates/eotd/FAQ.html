@@ -1,0 +1,91 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% block extra_head %}
+{% endblock extra_head %}
+
+{% load ifsetting_tag %}
+
+{% block head_title %}{% trans "Frequently Asked Questions" %}{% endblock %}
+
+{% block body %}
+<h1>{% trans "Faction Creation" %}</h1>
+
+<p>
+<h3>How do I create a new faction?</h3>
+You must first <a href="/eotd/account/signup/">sign-up</a> if you have not yet done so. Otherwise <a href="/eotd/account/login/">Log-in</a></p>
+    <p>Then click on <a href="/eotd/Faction/0/">New Faction</a> in the top navigation bar.</p>
+    <p>Enter a name, starting Schillings amount and choose a faction type from the select box. You may enter a description now if you choose to.</p>
+    <p>Click 'Save' and your Faction will be created.</p>
+
+<h1>{% trans 'Campaigns' %}</h1>
+<p>
+<h3>How do I join a campaign?</h3>
+Find the campaign you wish to join on the <a href="/eotd/campaign/">campaign list</a> page.</p>
+<p>Click on the campaign to go to the campaign view page</p>
+<p>You may immediately join the campaign via a pass-phrase - if known - or you may apply to join a campaign.</p>
+<p><h5>Join via pass-phrase</h5></p>
+<p>You will need to be given the campaign pass-phrase by a campaign administrator. This will be given to you outside of theUmpire of the Dead. IE via email or in person.</p>
+<p>On the campaign view page enter the pass-phrase in the input box to the right of the 'Join Campaign (enter password)' box.</p>
+<p>Click on the 'Join Campaign (enter password)' box. You should now be added to the Campaign player list and will be able to add Factions to the campaign.
+<p><h5>Join by applying</h5></p>
+<p>If you do not know a campaign pass-phrase you may still apply to join a campaign - unless the campaign admins have disabled this option.</p>
+<p>On the campaign view page click the 'Apply to join campaign' button.</p>
+<p>Your application will then appear on the campaign page for any campaign admins viewing it. They can chose to approve or deny your application. If they approve it you will then be able to add factions to the campaign.</p>
+
+<h3>How do I add a Faction to a Campaign</h3>
+<p>You must first join the campaign if you have not yet - see 'How do I join a campaign?'</p>
+<p>You may add an existing Faction to the campaign or create a new Faction for the campaign.</p>
+<p>First navigate to the campaign's page</p>
+<p><h5>Add an existing Faction</h5></p>
+<p>Select your existing Faction from the drop-down select to the right of the 'Add pre-existing faction' button.</p>
+<p>Click the 'Add pre-existing faction' button. Your faction will be added to the campaign if it meets the campaign's limits on maximum faction standing (Shillings) and exclusivity. IE some campaigns do not allow factions to simultaneously be in other campaigns.</p>
+<p><h5>Create a new Faction for the campaign.</h5></p>
+<p>Click the 'Create a new faction for this campaign' button. You will be taken to the Faction creation page with the Campaign Shilling limit set as the new faction's available Shillings.</p>
+<p>Once you save this new Faction it will be automatically added to the Campaign.</p>
+
+<h3>How do I add a game to a Campaign</h3>
+<p>Only one of the Campaign's admins can add a game.</p>
+<p>First navigate to the campaign's page</p>
+<p>In the 'Add new game' section of the Campaign page select the Factions involved in the game in the two selection boxes.</p>
+<p>If more than two Factions are involved in the game then you can select multiple Factions in each selection box by holding the 'ctrl' key on Windows and Linux, or the 'cmd' key on Mac.</p>
+<p>Select the date the game took place or will take place at via the date selection input.</p>
+<p>Click the 'Add game' button. The game is now added to the Campaign and the involved players can edit their results.</p>
+
+<h1>Playing games</h1>
+<h3>How do I get a printable roster?</h3>
+<p>Navigate to your Faction's page</p>
+<p>Click the 'Print View' button.</p>
+<p>A Faction roster, formated nicely for printing will appear. We recommend printing in Landscape mode.</p>
+<p>The roster should include all characters that are not currently Missing-Next-Game, as well as all carried weapons.</p>
+<p>Stats modified by injuries or new skills will be displayed with their modified value and marked with a * or ^.</p>
+
+<h3>How do I report a game result</h3>
+<p>An admin of the Campaign must first add the game to the Campaign - see 'How do I add a game to a Campaign'</p>
+<p>Once added, go to the Campaign view page and find the game in the 'Games' section of the page. Confirm it is the correct game by checking the Factions involved and the date played.</p>
+<p>Click the 'View game' button</p>
+<p>See 'Entering winnings' then 'Entering character progression'</p>
+
+<h3>Entering winnings</h3>
+<p>Naviagate to the game edit page - see 'How do I report a game result'</p>
+<p>Beside your Faction name enter values for 'Points scored' and 'Winnings' then click the 'Update' button. The 'Winnings' amount in Shillings will be added to your Faction treasury.</p>
+<p>The first time a Faction's result in a particular game is updated the list of characters involved in that game will be frozen as those currently in the Faction and not suffering a Miss-Next-Game injury. Thus make sure that your Faction roster is correctly updated from any previous games before clicking update.</p>
+
+<h3>Entering character progression</h3>
+<p>After 'Entering winnings' the characters involved in a game should appear on the Game view page.</p>
+<p>Update any injuries accured by selecting them in the drop-down box beside the relevant character.</p>
+<p>Do the same with any new skills purchased.</p>
+
+<h3>How do I heal injuries</h3>
+<p>On the Faction edit page, click on the name of the Character whose injury you wish to heal. A new dialogue will appear.</p>
+<p>Click on the 'View Injuries' button.</p>
+<p>A new dialogue will appear displaying all current and previously healed injuries.</p>
+<p>Select the type of Doctor used to heal the injury in the drop-down box beside the injury - the type chosen will affect the cost to your treasury of healing the injury. 'Sons of the Empire' receive the relevant Specialist Doctor cost reduction.<p>
+<p>Click either 'Mark as healed' or 'Mark healed & Close.'. Both will heal the injury if it can be afforded and will deduct the relevant cost from your Treasury. 'Mark as healed' will not immediately close the dialogue so you can more easily heal other injuries on this character.</p>
+
+<h3>Can I use the UotD site if my friends don't?</h3>
+<p>Yes. Create a personal Campaign and add the Factions you wish to maintain with the Umpire of the Dead to it.</p>
+<p>Create and add a dummy (empty) Faction to it. This Faction will represent the non-UotD Factions that you play against.</p>
+<p>When you play a game against a non-UotD Faction, add a campaign game against this dummy Faction. This will allow you to update your Factions status by entering the result/character-progression into this game.</p>
+
+{% endblock %}
