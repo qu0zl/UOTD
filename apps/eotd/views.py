@@ -588,9 +588,15 @@ def gameUnits(request, game_id):
                 if item.endswith('-skills'):
                     prefix=item.split('-')[0]
                     gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
+                    oldSkill = gameUnit.skills
                     try:
                         gameUnit.skills = eotd.models.Skill.objects.get(id=request.POST[item])
+                        # See if we need to adjust treasury due to buying or removing a skill
+                        if oldSkill == None and gameUnit.skills != None:
+                            gameUnit.gameTeam.team.adjustCoins ( -10 )
                     except ValueError:
+                        if oldSkill != None: # removing a skill, refund treasury
+                            gameUnit.gameTeam.team.adjustCoins ( 10 )
                         gameUnit.skills = None
                     gameUnit.save()
 
