@@ -474,7 +474,8 @@ class Unit(models.Model):
         return self.baseUnit.weapons.all() | self.unitWeapons.all()
     @property
     def skills(self):
-        return self.baseUnit.skills.all()
+        # All skills from the base template or purchased
+        return self.baseUnit.skills.all() | Skill.objects.filter(game_unit_for_skill__unit=self)
     @property
     def baseWeapons(self):
         return self.baseUnit.weapons.all()
