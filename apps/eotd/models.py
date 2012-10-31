@@ -420,6 +420,10 @@ class Unit(models.Model):
         cost = self.baseUnit.cost
         for item in self.unitWeapons.all():
             cost = cost +item.cost
+
+        # Add cost of any bought skills
+        cost = cost + (self.gameunit_set.exclude(skills=None).count() * 10)
+
         return cost
     @property
     def medieval(self):
