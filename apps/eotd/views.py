@@ -579,44 +579,44 @@ def gameUnits(request, game_id):
         if request.user.is_authenticated() and request.method == 'POST':
             game = eotd.models.Game.objects.get(id=game_id)
 
-            if not game.canEdit(request.user):
-                return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
-            print request.POST # greg remove
-            #team = eotd.models.Team.objects.get(id=int(request.POST['update']))
-            #gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
-            for item in request.POST:
-                if item.endswith('-skills'):
-                    prefix=item.split('-')[0]
-                    gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
-                    oldSkill = gameUnit.skills
-                    try:
-                        gameUnit.skills = eotd.models.Skill.objects.get(id=request.POST[item])
-                        # See if we need to adjust treasury due to buying or removing a skill
-                        if oldSkill == None and gameUnit.skills != None:
-                            gameUnit.gameTeam.team.adjustCoins ( -10 )
-                    except ValueError:
-                        if oldSkill != None: # removing a skill, refund treasury
-                            gameUnit.gameTeam.team.adjustCoins ( 10 )
-                        gameUnit.skills = None
-                    gameUnit.save()
+            if game.canEdit(request.user):
+                print request.POST # greg remove
+                #team = eotd.models.Team.objects.get(id=int(request.POST['update']))
+                #gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
+                for item in request.POST:
+                    if item.endswith('-skills'):
+                        prefix=item.split('-')[0]
+                        gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
+                        oldSkill = gameUnit.skills
+                        try:
+                            gameUnit.skills = eotd.models.Skill.objects.get(id=request.POST[item])
+                            # See if we need to adjust treasury due to buying or removing a skill
+                            if oldSkill == None and gameUnit.skills != None:
+                                gameUnit.gameTeam.team.adjustCoins ( -10 )
+                        except ValueError:
+                            if oldSkill != None: # removing a skill, refund treasury
+                                gameUnit.gameTeam.team.adjustCoins ( 10 )
+                            gameUnit.skills = None
+                        gameUnit.save()
 
-                    try:
-                        injury = eotd.models.Injury.objects.get(id=request.POST['%s-injuries' % prefix])
                         try:
-                            gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
-                            gameUnitInjury.injury = injury
-                        except ObjectDoesNotExist:
-                            gameUnitInjury = eotd.models.GameUnitInjury(gameUnit=gameUnit, injury=injury)
-                        gameUnitInjury.save()
-                    except ValueError:
-                        try:
-                            eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit).delete()
-                        except ObjectDoesNotExist:
-                            pass
-            return redirect('/eotd/game/%s/' % game_id)
+                            injury = eotd.models.Injury.objects.get(id=request.POST['%s-injuries' % prefix])
+                            try:
+                                gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
+                                gameUnitInjury.injury = injury
+                            except ObjectDoesNotExist:
+                                gameUnitInjury = eotd.models.GameUnitInjury(gameUnit=gameUnit, injury=injury)
+                            gameUnitInjury.save()
+                        except ValueError:
+                            try:
+                                eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit).delete()
+                            except ObjectDoesNotExist:
+                                pass
+                return redirect('/eotd/game/%s/' % game_id)
     except Exception as e:
         print 'gameUnits Exception', e
         return HttpResponseBadRequest(_('Failed to update game.'))
+    return HttpResponseBadRequest(_('You are not authorized to modify this game.'))
 
 def gameDelete(request, game_id):
     try:
