@@ -126,16 +126,22 @@ class WeaponList(models.Model):
     weapons = models.ManyToManyField('Weapon', related_name='weapon_lists', default=None, blank=False)
 
 class Injury(models.Model):
+    OTHER=0
     MNG=1
     MINUS_STRENGTH=2
     MINUS_FORTITUDE=3
+    MINUS_MOVEMENT=4
+    MINUS_BRAVADO=5
     ARRESTED=8
     CAPTURED=9
     DEAD=10
     INJURY_PENALTIES = (
+        (OTHER, _('----')),
         (MNG,  _('MNG')),
         (MINUS_STRENGTH,  _('-1 Strength')),
         (MINUS_FORTITUDE,  _('-1 Fortitude')),
+        (MINUS_MOVEMENT,  _('-1 Movement')),
+        (MINUS_BRAVADO, _('-1 Bravado')),
         (ARRESTED, _('Arrested')),
         (CAPTURED, _('Captured')),
         (DEAD, _('Dead')),
