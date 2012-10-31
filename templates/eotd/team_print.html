@@ -52,7 +52,7 @@
                 {% for skill in item.skills.all %}{% if forloop.counter > 1 %}, {% endif %}{{skill}}{% endfor %}
                 {% for weapon in item.weapons.all %}{% if forloop.counter > 1 or item.skills.all %}, {% endif %}{{weapon}}{% endfor %}
             </td>
-            <td></td>
+            <td>{{item.injuriesAsString}}</td>
             <td>{{item.cost}}</td>
         </tr>
     {% endfor %}

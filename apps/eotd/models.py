@@ -149,7 +149,15 @@ class Injury(models.Model):
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=100)
+    # abbreviated name used for print view
+    shortName = models.CharField(max_length=100, blank=True, null=True)
     penalty = models.SmallIntegerField(choices=INJURY_PENALTIES, default=1, blank=False)
+    @property
+    def abbreviation(self):
+        if self.shortName:
+            return self.shortName
+        return self.name
+
 
 class GameUnitInjury(models.Model):
     DOCTOR_CHOICES=(
@@ -505,6 +513,18 @@ class Unit(models.Model):
                 rv = "%s, %s" % (rv, item)
             else:
                 rv = rv + item.name
+        return rv
+    @property
+    def injuriesAsString(self):
+        rv =""
+        first = True
+
+        for item in self.gameunit_set.filter(gameunitinjury__healed=False).order_by('gameunitinjury__injury'):
+            if not first:
+                rv = "%s, %s" % (rv, item.injuries.get().abbreviation)
+            else:
+                rv = rv + item.injuries.get().abbreviation
+                first = False
         return rv
     # Is the unit missing the next game - MNG, captured, etc
     @property
