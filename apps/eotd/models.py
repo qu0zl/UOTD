@@ -564,6 +564,7 @@ class Team(models.Model):
     faction = models.ForeignKey(Faction, default=None, blank=False)
     owner = models.ForeignKey(User, null=True, default=None, blank=True)
     coins = models.IntegerField(default=0)
+    influence = models.IntegerField(default=0)
     description = models.TextField(max_length=800, blank=True)
     store = models.ManyToManyField('Weapon', default=None, through='UnitWeapon', blank=True)
     # Cannot delete a team that has played games
@@ -731,6 +732,8 @@ class GameTeam(models.Model):
     team = models.ForeignKey('Team')
     victoryPoints = models.SmallIntegerField(default=0, blank=False)
     earnings = models.SmallIntegerField(default=0, blank=False)
+    influenceSpent = models.SmallIntegerField(default=0, blank=False)
+    influenceBought = models.SmallIntegerField(default=0, blank=False)
     freezeTime = models.DateTimeField(null=True, blank=True)
     # units involved in this game
     units = models.ManyToManyField('Unit', related_name='game_for_unit', default=None, blank=True, through='GameUnit')
@@ -780,4 +783,4 @@ class GameFormLine(forms.ModelForm):
 
     class Meta:
         model = GameTeam
-        fields = ['team','victoryPoints','earnings']
+        fields = ['team','victoryPoints','earnings', 'influenceSpent', 'influenceBought']

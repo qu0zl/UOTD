@@ -3,6 +3,9 @@
 {% load i18n %}
 
 {% block extra_head %}
+<style>
+    input { width:90px; }
+</style>
 {% endblock extra_head %}
 
 {% load ifsetting_tag %}
@@ -24,6 +27,8 @@
                     <th>{% trans 'Team' %}</th>
                     <th>{% trans 'Points scored' %}</th>
                     <th>{% trans 'Winnings' %}</th>
+                    <th>{% trans 'Influence spent' %}</th>
+                    <th>{% trans 'Influence bought' %}</th>
                 </thead>
                 <tbody>
                     {% for team in teams %}
@@ -32,6 +37,8 @@
                             <td><a href="/eotd/team/{{team.teamID.value}}/">{{team.team.value}}</a></td>
                             <td>{{team.victoryPoints}}</td>
                             <td>{{team.earnings}}</td>
+                            <td>{{team.influenceSpent}}</td>
+                            <td>{{team.influenceBought}}</td>
                             <td><button name="save" type="submit" value="{{team.teamID.value}}">{% trans "Update" %}</button></td>
                         </tr>
                     </form>

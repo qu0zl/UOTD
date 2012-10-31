@@ -521,11 +521,10 @@ def gameForm(request, game_id):
         units = []
         for item in game.gameteam_set.all():
             teams.append( eotd.models.GameFormLine( initial = {
-                "team":item.team, "earnings":item.earnings, "victoryPoints":item.victoryPoints, "teamID":item.team.id}))
+                "team":item.team, "earnings":item.earnings, "victoryPoints":item.victoryPoints, "teamID":item.team.id, "influenceSpent":item.influenceSpent, "influenceBought":item.influenceBought}))
             inner = []
             for unit in item.gameunit_set.all():
                 # greg need to modify below unit.skills.get to .all() if we move to multiple skills per game
-                #greg gameUnitInjury = eotd.models.GameUnitInjury.objects.get(gameUnit=gameUnit)
                 line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
                     "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries.get() if unit.injuries.count() == 1 else None, "summary":unit.unit.gearAsString} )
 
@@ -559,10 +558,19 @@ def gameUpdate(request, game_id):
                 team = eotd.models.Team.objects.get(id=int(request.POST['save']))
                 gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
                 oldEarnings = gameTeam.earnings
-                gameTeam.earnings = int(request.POST['earnings'])
+                gameTeam.earnings = max(0, int(request.POST['earnings']))
                 earningsDiff = gameTeam.earnings - oldEarnings
                 gameTeam.victoryPoints = request.POST['victoryPoints']
+
+                oldInfluenceSpent = gameTeam.influenceSpent
+                gameTeam.influenceSpent = max(0, int(request.POST['influenceSpent']))
+
+                oldInfluenceBought = gameTeam.influenceBought
+                gameTeam.influenceBought = max(0, int(request.POST['influenceBought']))
+                earningsDiff = earningsDiff - ((gameTeam.influenceBought-oldInfluenceBought)*5)
+
                 gameTeam.save()
+                team.influence = team.influence - (gameTeam.influenceSpent-oldInfluenceSpent) + (gameTeam.influenceBought-oldInfluenceBought)
                 team.coins = team.coins+earningsDiff
                 team.save()
                 # Freeze the list of units used by this team in this game
