@@ -483,7 +483,7 @@ class Unit(models.Model):
     @property
     def bravado(self):
         # greg need to make this handle bravado crippling injury. I think there may be some?
-        return self.moddedStat(self.baseUnit.bravado+self.faction.bravadoMod, None, Skill.BRAVADO)
+        return self.moddedStat(self.baseUnit.bravado+self.faction.bravadoMod, Injury.MINUS_BRAVADO, Skill.BRAVADO)
     @property
     def arcane(self):
         return self.moddedStat(self.baseUnit.arcane+self.faction.arcaneMod, None, Skill.ARCANE) 
