@@ -200,8 +200,10 @@ def campaignTeamHandler( request, campaign_id, what ):
                 pass
     return HttpResponseForbidden(_('You are not authorized to add a team to this campaign. Are you correctly logged in and a member of this campaign?'))
 
-def teamList( request ):
+def teamList( request, faction=0 ):
     teams = eotd.models.Team.objects.order_by('name')
+    if faction:
+        teams = teams.filter(faction=faction)
     return render_to_response('eotd/team_list.html', \
         {
             'teams':teams,

@@ -19,6 +19,7 @@ urlpatterns = patterns("",
     # greg still need the below line?
     (r'^campaign/(\d+)/team/(\w+)/$', 'eotd.views.campaignTeamHandler'),
     (r'^team/$', 'eotd.views.teamList'),
+    (r'^team/list/(\d+)/$', 'eotd.views.teamList'),
     (r'^team/0/save/$', 'eotd.views.newTeamSave'),
     (r'^team/(\d+)/save/$', 'eotd.views.teamSave'),
     (r'^team/0/$', 'eotd.views.teamNew'),

@@ -6,7 +6,15 @@
 {% block nav %}
     <ul>{% spaceless %}
         <li><a href="/eotd/campaign/">{% trans "Campaigns" %}</a></li>
-        <li><a href="/eotd/team/">{% trans "Factions" %}</a></li>
+        <li>
+            <a href="/eotd/team/" class="menu">{% trans 'Factions' %}</a>
+                <ul class="menu-dropdown">
+                    <li><a href="/eotd/team/">{% trans "All" %}</a></li>
+                    {% for item in factions %}
+                    <li><a href="/eotd/team/list/{{item.id}}/">{{item}}</a></li>
+                    {% endfor %}
+                </ul>
+        </li>
         {% if user.is_authenticated %}
             <li><a href="/eotd/campaign/0/">{% trans "New Campaign" %}</a></li>
             <li><a href="/eotd/team/0/">{% trans "New Faction" %}</a></li>

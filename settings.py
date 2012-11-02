@@ -135,6 +135,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     
     "notification.context_processors.notification",
     "announcements.context_processors.site_wide_announcements",
+    "eotd.context_processors.site_wide_context",
 ]
 
 INSTALLED_APPS = [
