@@ -66,8 +66,11 @@ class Campaign(models.Model):
             raise PermissionDenied("Team owner is not a member of this campaign.")
         if self.coins < team.value:
             raise PermissionDenied("Team value is higher than that permitted to join this campaign.")
-        if self.exclusive and team.campaign_team_table.count() > 0:
-            raise PermissionDenied("This campaign does not allow a team to be in other campaigns. You must remove this team from any other campaigns in order to join.")
+        if self.exclusive:
+            if team.campaign_team_table.count() > 0:
+                raise PermissionDenied("This campaign does not allow a team to be in other campaigns. You must remove this team from any other campaigns in order to join.")
+        elif team.campaign_team_table.filter(exclusive=True).exists():
+            raise PermissionDenied("This team is already a member of a campaign that does not allow its teams to be in multiple campaigns. You must remove this team from that campaign before you can join this one.")
         self.teams.add(team)
         self.save()
 
