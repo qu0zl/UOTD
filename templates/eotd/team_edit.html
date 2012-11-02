@@ -115,6 +115,7 @@ $(document).ready(function() {
         dynamic_elements();
     }
     dynamic_elements();
+    $("#id_games").accordion({collapsible:true, active:false});
     function update_injury_dialog_html(html){
         $("#injury_dialog").html(html);
         $(".heal-button, .heal-and-close-button" ).button();
@@ -355,22 +356,52 @@ $(document).ready(function() {
         {% include 'eotd/team_inner.html' %}
     </div>
 
-        {% if edit %}
-        <div style="width=100%; display:block; clear:both;">
-            <table class="ui-widget">
-                <thead class="ui-widget-header">
-                    <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th><th></th></tr>
-                </thead>
-                <tbody class="ui-widget-content">
-                    {% for item in team.faction.unit_templates.all %}
-                    <tr>
-                        <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
-                    </tr>
+    {% if edit %}
+    <div style="width=100%; display:block; clear:both;">
+        <table class="ui-widget">
+            <thead class="ui-widget-header">
+                <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th><th></th></tr>
+            </thead>
+            <tbody class="ui-widget-content">
+                {% for item in team.faction.unit_templates.all %}
+                <tr>
+                    <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if team.game_for_team.exists %}
+    <div style="width=100%; display:block; clear:both;" id="id_games">
+        <p>View team's games.</p>
+        <table class="ui-widget">
+            <thead class="ui-widget-header">
+                <tr>
+                    <th>{% trans 'Enemy' %}</th>
+                    <th>{% trans 'Campaign' %}</th>
+                    <th>{% trans 'Date' %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="ui-widget-content">
+                {% for game in team.game_for_team.all %}
+                <tr>
+                    {% for gameTeam in game.gameteam_set.all %}
+                        {% if team != gameTeam.team %}
+                        <td><a href="/eotd/team/{{gameTeam.team.id}}/">{{gameTeam.team}}</a></td>
+                        {% endif %}
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% endif %}
+                    <td><a href="/eotd/campiang/{{game.campaign}}/">{{game.campaign}}</a></td>
+                    <td>{{game.date}}</td>
+                    <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 
         <div id="name_dialog" title="{%trans 'Change name'%}" style="display:none">
             <input type="text" id="name_input"></input>

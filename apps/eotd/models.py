@@ -39,7 +39,7 @@ class Campaign(models.Model):
     # players can add old team or only start new one?
     # campaign private? ie can others look at it
     def __unicode__(self):
-        return u"%s:%s" % (self.id, self.name)
+        return  unicode(self.name)
     def isOwner(self, user):
         return self.owner == user
     def isAdmin(self, user):

@@ -42,8 +42,8 @@
         </table>
     </div>
     {% if team.inactiveUnits %}
-    <div id="id_retired">
-        <p>View retired and dead.</g>
+    <div style="width=100%; display:block; clear:both; background-color:black;" id="id_retired">
+        <p>{% trans 'View retired and dead.' %}</p>
         <table>
             {% include 'eotd/team_inner_thead.html' %}
             <tbody class="tb_unit ui-widget-content" id="{{item.id}}">
