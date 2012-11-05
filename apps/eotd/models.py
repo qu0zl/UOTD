@@ -154,12 +154,19 @@ class Injury(models.Model):
     name = models.CharField(max_length=100)
     # abbreviated name used for print view
     shortName = models.CharField(max_length=100, blank=True, null=True)
+    # Used for team edit view. So needs to be 1 letter long or so.
+    microName = models.CharField(max_length=10, blank=True, null=True)
     penalty = models.SmallIntegerField(choices=INJURY_PENALTIES, default=1, blank=False)
     @property
     def abbreviation(self):
         if self.shortName:
             return self.shortName
         return self.name
+    @property
+    def micro(self):
+        if self.microName:
+            return self.microName
+        return '?'
 
 
 class GameUnitInjury(models.Model):
@@ -517,12 +524,16 @@ class Unit(models.Model):
             else:
                 rv = rv + item.name
         return rv
+    # Excludes MNG which is dealt with seperately
+    @property
+    def injuries(self):
+        return self.gameunit_set.filter(gameunitinjury__healed=False).exclude(gameunitinjury__injury__penalty=Injury.MNG).order_by('gameunitinjury__injury')
     @property
     def injuriesAsString(self):
         rv =""
         first = True
 
-        for item in self.gameunit_set.filter(gameunitinjury__healed=False).order_by('gameunitinjury__injury'):
+        for item in self.injuries:
             if not first:
                 rv = "%s, %s" % (rv, item.injuries.get().abbreviation)
             else:

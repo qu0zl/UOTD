@@ -25,15 +25,22 @@
                     {% endif %}
                     <div class="weapon-slot ui-state-content {% if item.medieval %}medieval-slot{% endif%}" id="ws_{{item.id}}"></div>
                     <div style="float:right;">
-                        <div class="ui-state-content" style="display:inline-block; float:right;">
-                            <button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button>
+                        <div style="float:right;">
+                            <div class="ui-state-content" style="display:inline-block; float:right;">
+                                <button class="purchase_button" style="float:right;" value="{{item.id}}" id="purchase_{{item.id}}">{% trans 'Equip' %}</button>
+                            </div>
+                            {% if item.isMNG %}
+                            <div class="MNG ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only"><p>Miss Next game</p></div>
+                            {% endif %}
+                            <div class="ui-state-content" style="padding:0px 6px; display:inline-block; float:left;">
+                                <button class={% if item.isNew %}"unhire_button"{% else %}"retire_button"{% endif %} type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Cancel hire' %} {% else %} {% trans 'Retire' %} {% endif %}</button>
+                            </div>
                         </div>
-                        {% if item.isMNG %}
-                        <div class="MNG ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only"><p>Miss Next game</p></div>
-                        {% endif %}
-                        <div class="ui-state-content" style="padding:0px 6px; display:inline-block; float:left;">
-                            <button class={% if item.isNew %}"unhire_button"{% else %}"retire_button"{% endif %} type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Cancel hire' %} {% else %} {% trans 'Retire' %} {% endif %}</button>
+                        {% for injury in item.injuries.all %}
+                        <div title="{{injury.injuries.get}}" class="ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only injury">
+                            {{injury.injuries.get.micro}}
                         </div>
+                        {% endfor %}
                     </div>
                     </td>
                 </tr>
