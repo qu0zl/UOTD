@@ -321,16 +321,22 @@ class UnitWeapon(models.Model):
         else:
             return unicode(self.weapon)
     def sell(self):
-        try:
-            team = self.unit.team
-        except AttributeError as e:
-            team = self.team
-        if team.playedSince(self.creationTime):
+        team = self.getTeam
+        if self.isNew:
                 team.coins = team.coins + (self.weapon.cost/2)
         else:
             team.coins = team.coins + self.weapon.cost
         team.save()
         self.delete()
+    @property
+    def getTeam(self):
+        try:
+            return self.unit.team
+        except AttributeError as e:
+            return self.team
+    @property
+    def isNew(self):
+        return not self.getTeam.playedSince(self.creationTime)
 # Describes a unit or team-member model. These are the unmodified statistics that will
 # act as a template on which instances of units in a campaign will be based.
 
@@ -509,7 +515,7 @@ class Unit(models.Model):
         return self.baseUnit.weapons.all()
     @property
     def boughtWeapons(self):
-        return self.unitWeapons.all()
+        return UnitWeapon.objects.filter(unit=self)
     @property
     def gearAsString(self):
         rv =""

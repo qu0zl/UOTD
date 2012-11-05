@@ -17,9 +17,9 @@
                         </div>
                         {% endfor %}
 
-                        {% for weapon in item.boughtWeapons.all %}
-                        <div id="{{item.id}}_{{weapon.id}}" class="weapon bought-weapon ui-state-highlight {% if weapon.medieval %}medieval-weapon{% endif %}">
-                            <p style="margin-bottom: 0px;">{{weapon}}</p>
+                        {% for unitWeapon in item.boughtWeapons.all %}
+                        <div id="{{item.id}}_{{unitWeapon.weapon.id}}" class="weapon bought-weapon {% if unitWeapon.weapon.medieval %}medieval-weapon{% endif %}{% if unitWeapon.isNew %} ui-state-highlight" title="{% trans 'New weapon, can be sold for full price.' %}{%else%} ui-state-hover" title="{%trans 'Old weapon, will be sold for partial price.'%}{% endif %}">
+                            <p style="margin-bottom: 0px;">{{unitWeapon.weapon}}</p>
                         </div>
                         {% endfor %}
                     {% endif %}
