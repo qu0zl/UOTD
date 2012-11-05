@@ -322,7 +322,7 @@ class UnitWeapon(models.Model):
             return unicode(self.weapon)
     def sell(self):
         team = self.getTeam
-        if self.isNew:
+        if not self.isNew:
                 team.coins = team.coins + (self.weapon.cost/2)
         else:
             team.coins = team.coins + self.weapon.cost
