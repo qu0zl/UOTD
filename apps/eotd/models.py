@@ -326,7 +326,7 @@ class UnitWeapon(models.Model):
         except AttributeError as e:
             team = self.team
         if team.playedSince(self.creationTime):
-                team.coins = team.coins + math.ceil(self.weapon.cost/2.0)
+                team.coins = team.coins + (self.weapon.cost/2)
         else:
             team.coins = team.coins + self.weapon.cost
         team.save()
