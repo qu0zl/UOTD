@@ -397,9 +397,9 @@ class Unit(models.Model):
         for item in self.unitWeapons.all():
             hands = hands + item.hands
         return hands
-    def allowedWeapon(self, weapon):
-        # check cost first
-        if weapon.cost > self.team.coins:
+    def allowedWeapon(self, weapon, isPurchase=True):
+        # check cost first but only if this is a purchase
+        if isPurchase and weapon.cost > self.team.coins:
             raise PermissionDenied("Cannot afford this item.")
         if weapon.hands + self.handsWorth() > 4:
             raise PermissionDenied("Cannot carry this many hands worth of equipment.")

@@ -408,7 +408,7 @@ def weaponMove(request, team_id):
                 weaponEntry.save()
             # move    
             else:
-                toUnit.allowedWeapon(weaponEntry.weapon) # will raise exception if illegal
+                toUnit.allowedWeapon(weaponEntry.weapon, isPurchase=False) # will raise exception if illegal
                 weaponEntry.unit=toUnit
                 weaponEntry.team = None
                 weaponEntry.save()
