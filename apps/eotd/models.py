@@ -617,10 +617,7 @@ class Team(models.Model):
         return self.name
     # Does this Team have a leader model
     def hasLeader(self):
-        for item in self.activeUnits:
-            if item.leader:
-                return True
-        return False
+        return self.activeUnits.filter(models.Q(baseUnit__leader=True) | models.Q(unitLeaderOverride=True)).count() > 0
     @property
     def hasPlayedGames(self):
         return GameTeam.objects.filter(team=self).exists()
@@ -641,8 +638,8 @@ class Team(models.Model):
             raise PermissionDenied(_("Only one leader model allowed."))
         # Only allowed have 1/3rd (rounding-up) of models be heroes
         if unitTemplate.hero:
-            heroCount = self.units.filter(baseUnit__hero=True).count()
-            plebCount = self.units.filter(baseUnit__hero=False).count()
+            heroCount = self.activeUnits.filter(baseUnit__hero=True).count()
+            plebCount = self.activeUnits.filter(baseUnit__hero=False).count()
             maxHeroCount = math.ceil(plebCount/2.0)
             if maxHeroCount == 0:
                 maxHeroCount = 1
