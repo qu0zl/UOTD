@@ -618,7 +618,7 @@ class Team(models.Model):
         return self.name
     # Does this Team have a leader model
     def hasLeader(self):
-        for item in self.units.all():
+        for item in self.activeUnits.all():
             if item.leader:
                 return True
         return False
