@@ -498,7 +498,6 @@ class Unit(models.Model):
         return self.moddedStat(self.baseUnit.wounds, None, Skill.WOUNDS)
     @property
     def bravado(self):
-        # greg need to make this handle bravado crippling injury. I think there may be some?
         return self.moddedStat(self.baseUnit.bravado+self.faction.bravadoMod, Injury.MINUS_BRAVADO, Skill.BRAVADO)
     @property
     def arcane(self):
@@ -698,18 +697,17 @@ class Team(models.Model):
         self.save()
     @property
     def activeUnits(self):
-        nonRetired = Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
-        return [x for x in nonRetired if not x.isDead]
+        # exclude retired and dead models
+        return Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None)).filter(~models.Q(gameunit__injuries__penalty=Injury.DEAD, gameunit__gameunitinjury__healed=False))
     @property
     def inactiveUnits(self):
-        return list(self.retiredUnits) + self.deadUnits
+        return (self.retiredUnits | self.deadUnits).distinct()
     @property
     def retiredUnits(self):
         return Unit.objects.filter(team=self).exclude(retiredTime=None)
     @property
     def deadUnits(self):
-        nonRetired = Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None))
-        return [x for x in nonRetired if x.isDead]
+        return Unit.objects.filter(team=self).filter(models.Q(gameunit__injuries__penalty=Injury.DEAD, gameunit__gameunitinjury__healed=False))
     # List of weapons carried by active units
     @property
     def activeWeapons(self):
