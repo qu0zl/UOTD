@@ -36,7 +36,7 @@
                                 <button class={% if item.isNew %}"unhire_button"{% else %}"retire_button"{% endif %} type="button" value="{{item.id}}" id="fire_{{item.id}}">{% if item.isNew %} {% trans 'Cancel hire' %} {% else %} {% trans 'Retire' %} {% endif %}</button>
                             </div>
                         </div>
-                        {% for injury in item.injuries.all %}
+                        {% for injury in item.injuriesExMNG.all %}
                         <div title="{{injury.injuries.get}}" class="ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only injury">
                             {{injury.injuries.get.micro}}
                         </div>

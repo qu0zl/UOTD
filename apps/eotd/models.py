@@ -535,10 +535,12 @@ class Unit(models.Model):
             else:
                 rv = rv + item.name
         return rv
-    # Excludes MNG which is dealt with seperately
     @property
     def injuries(self):
-        return self.gameunit_set.filter(gameunitinjury__healed=False).exclude(gameunitinjury__injury__penalty=Injury.MNG).order_by('gameunitinjury__injury')
+        return self.gameunit_set.filter(gameunitinjury__healed=False).order_by('gameunitinjury__injury')
+    @property
+    def injuriesExMNG(self):
+        return self.injuries.exclude(gameunitinjury__injury__penalty=Injury.MNG)
     @property
     def injuriesAsString(self):
         rv =""
