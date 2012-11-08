@@ -684,7 +684,7 @@ class Team(models.Model):
     @property
     def value(self):
         cost = self.coins
-        for unit in self.activeUnits:
+        for unit in self.activeUnitsNoMNG:
             cost = cost + unit.cost
         return cost + self.storeValue + (self.influence * 5)
     def adjustCoins(self, amount):
