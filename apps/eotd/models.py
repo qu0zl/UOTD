@@ -181,7 +181,8 @@ class GameUnitInjury(models.Model):
         0:0,
         1:4,
         2:8,
-        3:12
+        3:12,
+        10:0
     }
     healed = models.BooleanField(default=False)
     doctor = models.SmallIntegerField(choices=DOCTOR_CHOICES, default=0, blank=False)
@@ -198,7 +199,6 @@ class GameUnitInjury(models.Model):
         if doctorType == 3 and self.gameUnit.unit.team.faction.name.lower()=='sons of the empire':
             doctorCost = doctorCost - 2
 
-        # if doctor is specialist and we're a Sons of the Empire faction then reduce cost by 2
         return doctorCost
     @property
     def doctorString(self):
