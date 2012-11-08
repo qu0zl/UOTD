@@ -175,14 +175,14 @@ class GameUnitInjury(models.Model):
         (1, _('Charlatan')),
         (2, _('Local GP')),
         (3, _('Harley Street specialist')),
-        (10, _('Free/Healing Hands')),
+        (4, _('Free/Healing Hands')),
     )
     DOCTOR_COSTS={
         0:0,
         1:4,
         2:8,
         3:12,
-        10:0
+        4:0
     }
     healed = models.BooleanField(default=False)
     doctor = models.SmallIntegerField(choices=DOCTOR_CHOICES, default=0, blank=False)
