@@ -431,6 +431,12 @@ class Unit(models.Model):
         injury.date = datetime.datetime.today()
         self.team.adjustCoins(cost * -1)
         injury.save()
+    def clearMNG(self):
+        for gameunit in self.gameunit_set.filter(gameunitinjury__healed=False, gameunitinjury__injury__penalty=Injury.MNG):
+            gameunitinjury = gameunit.gameunitinjury_set.get()
+            gameunitinjury.healed=True
+            gameunitinjury.save()
+
     def addWeapon(self, weapon_id):
         weapon = Weapon.objects.get(id=weapon_id)
         newWeapon = UnitWeapon(weapon=weapon, unit=self)
@@ -548,17 +554,7 @@ class Unit(models.Model):
     # Is the unit missing the next game - MNG, captured, etc
     @property
     def isMNG(self):
-        # greg filter based on freezeTime
-        try:
-            mostRecentGame = self.gameunit_set.filter(gameTeam__freezeTime=self.team.freezeTime).get()
-            try:
-                if mostRecentGame.injuries.penalty == Injury.MNG:
-                    return True
-            except AttributeError:
-                pass
-        except ObjectDoesNotExist:
-            pass
-        return False
+        return self.injuryCount(Injury.MNG) > 0
     def statModCount(self, statType):
         if not statType:
             return 0
@@ -696,6 +692,13 @@ class Team(models.Model):
     def activeUnits(self):
         # exclude retired and dead models
         return Unit.objects.filter(team=self).exclude(~models.Q(retiredTime=None)).filter(~models.Q(gameunit__injuries__penalty=Injury.DEAD, gameunit__gameunitinjury__healed=False))
+    # return the list of alive/non-retired units, excluding any that are miss next game
+    @property
+    def activeUnitsNoMNG(self):
+        return self.activeUnits.filter(~models.Q(gameunit__injuries__penalty=Injury.MNG, gameunit__gameunitinjury__healed=False))
+    def clearMNG(self):
+        for item in self.activeUnits.filter(models.Q(gameunit__injuries__penalty=Injury.MNG, gameunit__gameunitinjury__healed=False)):
+            item.clearMNG()
     @property
     def inactiveUnits(self):
         return (self.retiredUnits | self.deadUnits).distinct()
@@ -778,10 +781,12 @@ class GameTeam(models.Model):
     def freezeUnits(self):
         if self.units.count()>0:
             return
-        for item in self.team.units.all():
+        for item in self.team.activeUnitsNoMNG.all():
             gameUnit = GameUnit(gameTeam=self, unit=item)
             gameUnit.save()
         self.freezeTime = datetime.datetime.now()
+        # remove any MNG status
+        self.team.clearMNG()
         self.save()
         # Update the team object's most recent game timestamp
         self.team.updateFreezeTime(self.freezeTime)
