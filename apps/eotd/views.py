@@ -125,6 +125,24 @@ def addCampaignApplicant(campaign, user):
         a = eotd.models.CampaignApplicant(campaign=campaign, user=user)
         a.save()
 
+def campaignMangeAdmin(request, campaign_id, user_id, command):
+    try:
+        if request.user.is_authenticated():
+            campaign = eotd.models.Campaign.objects.get(id=campaign_id)
+            user = eotd.models.User.objects.get(id=user_id)
+            if campaign.owner == request.user:
+                if user in campaign.players.all():
+                    if command == 'admin' and user not in campaign.admins.all():
+                        campaign.admins.add(user)
+                        campaign.save()
+                    elif command == 'unadmin' and user in campaign.admins.all():
+                        campaign.admins.remove(user)
+                        campaign.save()
+                    return redirect('/eotd/campaign/%d/' % campaign.id)
+    except:
+        pass # fall through to the general HttpResponseForbidden below
+    return HttpResponseForbidden(_('Unable to modify campaign admins. Are you logged in correctly?'))
+
 def campaignApply( request, campaign ):
     addCampaignApplicant(campaign, request.user)
     return redirect('/eotd/campaign/%d/' % campaign.id)

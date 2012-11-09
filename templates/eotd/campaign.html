@@ -35,10 +35,8 @@
                 {% endif %}
             }
             return false;
-
-
-
         });
+        $("#id_players").accordion({collapsible:true, active:false});
     });
 </script>
 {% endblock extra_head %}
@@ -131,6 +129,35 @@
 
 
         </form>
+        {% if campaign_id != '0' and owner %}
+        <form>
+            <div style="width=100%; display:block; clear:both;" id="id_players">
+                <p>{% trans 'Manage campaign administrators (click here).' %}</p>
+                <table class="ui-widget">
+                    <thead class="ui-widget-header">
+                    <tr>
+                        <th>{% trans 'Name' %}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody class="ui-widget-content">
+                        {% for player in campaign.players.all %}
+                            {% if player != campaign.owner %}
+                            <tr>
+                                <td><a class="link" href="/profiles/profile/{{player}}/">{{player}}</a></td>
+                                {% if player not in campaign.admins.all %}
+                                <td><a class="link" href="/eotd/campaign/{{campaign_id}}/{{player.id}}/admin">{% trans 'Make admin' %}</a></td>
+                                {% else %}
+                                <td><a class="link" href="/eotd/campaign/{{campaign_id}}/{{player.id}}/unadmin">{% trans 'Un-admin' %}</a></td>
+                                {% endif %}
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+        {% endif %}
 
         {% if campaign_id != '0' %}
         <div style="width=100%; display:block; clear:both;">
