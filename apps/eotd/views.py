@@ -374,7 +374,7 @@ def teamReorder(request, team_id):
 
 def unitName(request, unit_id):
     try:
-        if request.is_ajax() and request.user.is_authenticated():
+        if request.user.is_authenticated():
             unit = eotd.models.Unit.objects.get(id=unit_id)
             if request.user == unit.team.owner:
                 unit.name = request.POST['name']
@@ -382,9 +382,11 @@ def unitName(request, unit_id):
                 return HttpResponse()
             else:
                 return HttpResponseBadRequest(_('User unauthorised.'))
+        else:
+            return HttpResponseBadRequest(_('You are not logged in.'))
     except Exception as e:
         print 'unitName Exception', e
-        return HttpResponseBadRequest(_('Failed to update name'))
+    return HttpResponseBadRequest(_('Failed to update name'))
 
 # team_id is necessary when moving a store item as we don't have a unit to deduce team from
 def weaponMove(request, team_id):

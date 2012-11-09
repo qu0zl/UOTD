@@ -260,7 +260,10 @@ $(document).ready(function() {
                     success: function(data){
                         $('#'+$(this).data('caller').id).button( "option", "label", $(this).find('input').val() );
                         $(this).dialog('close');
-                    }
+                    },
+                    error: function(data){
+                        alert(data.responseText);
+                    },
                 });
                 },
             'Cancel': function(){
@@ -283,7 +286,7 @@ $(document).ready(function() {
                 url: "/eotd/team/{{team.id}}/reorder/",
                 data: {'order':$(this).sortable('toArray')},
                 dataType: "json",
-                failure: function(data){
+                error: function(data){
                     alert("{%trans 'Unable to save updated faction order.' %}");
                 },
             });
