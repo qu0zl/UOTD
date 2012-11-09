@@ -54,7 +54,7 @@ class Campaign(models.Model):
         # Only the campaign owner may delete it. Not an ordinary admin.
         if not self.isOwner(user):
             return False
-        seld.delete()
+        self.delete()
         return True
     # checks if the user is a player OR the owner. Owner is considered a player automatically.
     def isPlayer(self, user):

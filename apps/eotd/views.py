@@ -50,7 +50,8 @@ def campaignSave(request, campaign_id):
                 print 'trying to make new campaign' 
                 form = eotd.models.CampaignForm(request.POST) # A form bound to the POST data
                 campaign = form.save()
-                campaign.owner=(request.user) 
+                campaign.owner=(request.user)
+                campaign.players.add(request.user)
                 campaign.save() 
                 print 'saved new campaign - %d' % campaign.id 
             else: 
