@@ -439,6 +439,7 @@ class Unit(models.Model):
 
     def addWeapon(self, weapon_id):
         weapon = Weapon.objects.get(id=weapon_id)
+        self.allowedWeapon(weapon)
         newWeapon = UnitWeapon(weapon=weapon, unit=self)
         newWeapon.save()
         self.team.coins = self.team.coins - weapon.cost
