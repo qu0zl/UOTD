@@ -421,6 +421,24 @@ class Unit(models.Model):
                     raise PermissionDenied("May only use medieval weapons.")
         raise PermissionDenied("Illegal weapon choice")
 
+    def unitSpecificWeaponLists(self):
+        '''Return weaponLists from the unitTemplate but filter out any illegal choices based on medieval, CCW etc'''
+        rv = []
+        try:
+            UnitTemplateWeaponList
+            for utwl in UnitTemplateWeaponList.objects.filter(unitTemplate=self.baseUnit):
+                item = dict()
+                item['name']=utwl.weaponLists.name
+                item['id']=utwl.weaponLists.id
+                weapons = utwl.weaponLists.weapons.all()
+                if utwl.medievalOnly:
+                    weapons = weapons.filter(medieval=True)
+                item['weapons']=weapons
+                rv.append(item)
+        except Exception as e:
+            print 'unitSpecificWeaponLists exception', e
+        return rv
+
     def heal(self, injury_id, doctor):
         injury = GameUnitInjury.objects.get(id=injury_id, gameUnit__unit=self, healed=False)
         cost = injury.cost(doctor)
