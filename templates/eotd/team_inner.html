@@ -37,7 +37,7 @@
                             </div>
                         </div>
                         {% for injury in item.injuriesExMNG.all %}
-                        <div title="{{injury.injuries.get}}" class="ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only injury">
+                        <div title="{{injury.injuries.get}} - {%trans 'click on unit name to heal injuries.'%}" class="ui-button ui-widget ui-corner-all ui-state-hover ui-button-text-only injury">
                             {{injury.injuries.get.micro}}
                         </div>
                         {% endfor %}
