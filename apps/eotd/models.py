@@ -702,7 +702,7 @@ class Team(models.Model):
         return value
     @property
     def value(self):
-        cost = self.coins
+        cost = self.coins + self.faction.cost
         for unit in self.activeUnitsNoMNG:
             cost = cost + unit.cost
         return cost + self.storeValue + (self.influence * 5)

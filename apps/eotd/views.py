@@ -301,6 +301,9 @@ def newTeamSave(request):
             team = form.save() # save below after setting owner
         except ValueError:
             return HttpResponseForbidden(_('Unable to create new team. Did you select team faction?'))
+        # Apply an faction costs here
+        if team.faction.cost:
+            team.coins = team.coins - team.faction.cost
         team.owner=request.user 
         team.save() 
         try:
