@@ -397,7 +397,7 @@ $(document).ready(function() {
                         <td><a href="/eotd/team/{{gameTeam.team.id}}/">{{gameTeam.team}}</a></td>
                         {% endif %}
                     {% endfor %}
-                    <td><a href="/eotd/campiang/{{game.campaign}}/">{{game.campaign}}</a></td>
+                    <td><a href="/eotd/campaign/{{game.campaign.id}}/">{{game.campaign}}</a></td>
                     <td>{{game.date}}</td>
                     <td><a class="link" href="/eotd/game/{{game.id}}/">{% trans 'View game' %}</a></td>
                 </tr>
