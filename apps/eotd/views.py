@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.forms.formsets import formset_factory
+import csv
 import json
 from django.utils import simplejson
 from datetime import datetime
@@ -228,6 +229,27 @@ def teamList( request, faction=0 ):
             'teams':teams,
         }, \
         RequestContext(request))
+def teamCSV( request, team_id ):
+    team = eotd.models.Team.objects.get(id=team_id)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="%s.csv"' % team.name
+    writer = csv.writer(response)
+    writer.writerow([team.name,'Faction:',team.faction,'Standing:',team.value,'Coins:',team.coins,'Influence:',team.influence])
+    writer.writerow(['Name', 'Role', 'Move', 'Combat', 'Mark.', 'Strength', 'Fort.', 'Attacks','Wounds','Bravado','Arcane','Equipment','Injuries','Cost'])
+    for item in team.activeUnits:
+        def iterEquip(items,equip,first):
+            for inner in items:
+                if not first:
+                    equip = equip + ", "
+                else:
+                    first = False
+                equip = equip + inner.name
+            return (equip,first)
+        equip, first = iterEquip(item.skills.all(),"",True)
+        equip, first = iterEquip(item.weapons.all(),equip,first)
+
+        writer.writerow([item.name,item.baseUnit.name,item.movement,item.combat,item.marksmanship,item.strength,item.fortitude,item.attacks,item.wounds,item.bravado,item.arcane,equip,item.injuriesAsString,item.cost])
+    return response
 
 def teamPrint( request, team_id ):
     team = eotd.models.Team.objects.get(id=team_id)
