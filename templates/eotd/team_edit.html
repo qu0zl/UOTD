@@ -368,9 +368,9 @@ $(document).ready(function() {
                 <tr><th></th><th>{% trans 'Movement' %}</th><th>{% trans 'Combat' %}</th><th>{% trans 'Marks.' %}</th><th>{% trans 'Strength' %}</th><th>{% trans 'Fortitude' %}</th><th>{% trans 'Attacks' %}</th><th>{% trans 'Wounds' %}</th><th>{% trans 'Bravado' %}</th><th>{% trans 'Arcane' %}</th><th>{% trans 'Cost' %}</th><th></th></tr>
             </thead>
             <tbody class="ui-widget-content">
-                {% for item in team.faction.unit_templates.all %}
+                {% for item in team.faction.availableUnitTemplates %}
                 <tr>
-                    <td>{{ item.name}}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
+                    <td>{{ item.name}}{% for minion in item.comesWith.all %} [{{minion.name}}]{% endfor %}</td><td>{{item.movement}}</td><td>{{item.combat}}</td><td>{{item.marksmanship}}</td><td>{{item.strength}}</td><td>{{item.fortitude}}</td><td>{{item.attacks}}</td><td>{{item.wounds}}</td><td>{{item.bravado}}</td><td>{{item.arcane}}</td><td>{{item.cost}}</td><td><a class="link" href="/eotd/team/{{team.id}}/hire/{{item.id}}/">{% trans 'Hire' %}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>

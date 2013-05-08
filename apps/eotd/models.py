@@ -292,6 +292,10 @@ class Faction(models.Model):
     marksmanshipMod = models.SmallIntegerField(default=0, blank=False)
     bravadoMod = models.SmallIntegerField(default=0, blank=False)
     arcaneMod = models.SmallIntegerField(default=0, blank=False)
+    @property
+    def availableUnitTemplates(self):
+        # exclude UnitTemplates which have notForPurchase set to True
+        return UnitTemplate.objects.filter(faction=self,notForPurchase=False)
 
 class UnitTemplateSkill(models.Model):
     skill = models.ForeignKey('Skill')
@@ -362,6 +366,11 @@ class UnitTemplate(models.Model):
     hero = models.BooleanField(default=False)
     leader = models.BooleanField(default=False)
     animal = models.BooleanField(default=False)
+    # If this unit type should not be available for purchase. May be used for units that come free with others.
+    notForPurchase = models.BooleanField(default=False)
+    # Used to point to another UnitTemplate that should come free with this template.
+    comesWith = models.ManyToManyField('UnitTemplate', default=None, blank=True)
+
     specialType = models.SmallIntegerField(choices=SPECIALIST_CHOICES,default=0,blank=False)
     cost = models.SmallIntegerField(default=100, blank=False)
     movement = models.SmallIntegerField(choices=STAT_CHOICES, default=4, blank=False)
@@ -689,6 +698,9 @@ class Team(models.Model):
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
         unit.save()
         self.adjustCoins(unitTemplate.cost * -1)
+        for minion in unitTemplate.comesWith.all():
+            minion = Unit(faction=self.faction, baseUnit=unitTemplate.comesWith.all()[0], team=self, unitOrder=self.units.count()+1)
+            minion.save()
         return self.coins
     def reorder(self, order):
         try:
