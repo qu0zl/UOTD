@@ -79,6 +79,14 @@ class CampaignForm(forms.ModelForm):
             model = Campaign
             fields = ['name', 'coins', 'secret', 'description']
 
+SPECIALIST=1
+ALLOW_SPECIALIST=2
+SPECIALIST_CHOICES = (
+    (0, _('---')),
+    (SPECIALIST, _('Specialist')),
+    (ALLOW_SPECIALIST, _('Allow Specialist'))
+)
+
 # Used for unit and weapon stats
 STAT_CHOICES = (
     (1,  _('1')),
@@ -354,6 +362,7 @@ class UnitTemplate(models.Model):
     hero = models.BooleanField(default=False)
     leader = models.BooleanField(default=False)
     animal = models.BooleanField(default=False)
+    specialType = models.SmallIntegerField(choices=SPECIALIST_CHOICES,default=0,blank=False)
     cost = models.SmallIntegerField(default=100, blank=False)
     movement = models.SmallIntegerField(choices=STAT_CHOICES, default=4, blank=False)
     combat = models.SmallIntegerField(choices=STAT_CHOICES, default=3, blank=False)
@@ -662,6 +671,12 @@ class Team(models.Model):
                 maxHeroCount = 1
             if heroCount+1 > maxHeroCount:
                 raise PermissionDenied(_("Would exceed 1/3rd heroes faction composition limit."))
+        # Cannot have more specialists than it has specialist-allowing models
+        if unitTemplate.specialType == SPECIALIST:
+            specAllowCount = self.activeUnits.filter(baseUnit__specialType=ALLOW_SPECIALIST).count()
+            specCount = self.activeUnits.filter(baseUnit__specialType=SPECIALIST).count()
+            if specCount+1 > specAllowCount:
+                raise PermissionDenied(_("Cannot have more specialists than specialist-allowing models."))
         # Not allowed exceed maximum number of certain models
         if unitTemplate.maxCount > 0:
             if self.units.filter(baseUnit=unitTemplate).count() >= unitTemplate.maxCount:
