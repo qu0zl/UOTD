@@ -547,7 +547,11 @@ class Unit(models.Model):
         return self.moddedStat(self.baseUnit.arcane+self.faction.arcaneMod, None, Skill.ARCANE) 
     @property
     def weapons(self):
-        return self.baseUnit.weapons.all() | self.unitWeapons.all()
+        # Don't be clever and use the below to save a DB call.
+        # By adding two querysets with '|' the queries are combined before
+        # the DB call is made, and we end up getting many duplicate entries.
+        # return self.baseUnit.weapons.all() | self.unitWeapons.all()
+        return list(self.baseWeapons) + list(self.unitWeapons.all())
     @property
     def skills(self):
         # All skills from the base template or purchased
