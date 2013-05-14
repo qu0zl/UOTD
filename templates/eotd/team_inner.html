@@ -10,7 +10,7 @@
                 <tr>
                     <td class="weapon_row"><p></p></td>
                     <td colspan="12" class="weapon_row">
-                    {% if item.weapons.all %}
+                    {% if item.weapons %}
                         {% for weapon in item.baseWeapons.all %}
                         <div class="weapon">
                             {{weapon}}

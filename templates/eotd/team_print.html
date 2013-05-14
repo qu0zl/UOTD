@@ -50,7 +50,7 @@
             <td>{{item.arcane}}</td>
             <td>
                 {% for skill in item.skills.all %}{% if forloop.counter > 1 %}, {% endif %}{{skill}}{% endfor %}
-                {% for weapon in item.weapons.all %}{% if forloop.counter > 1 or item.skills.all %}, {% endif %}{{weapon}}{% endfor %}
+                {% for weapon in item.weapons %}{% if forloop.counter > 1 or item.skills.all %}, {% endif %}{{weapon}}{% endfor %}
             </td>
             <td>{{item.injuriesAsString}}</td>
             <td>{{item.cost}}</td>
