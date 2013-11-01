@@ -571,7 +571,8 @@ def gameForm(request, game_id):
             teams.append( eotd.models.GameFormLine( initial = {
                 "team":item.team, "earnings":item.earnings, "victoryPoints":item.victoryPoints, "teamID":item.team.id, "influenceSpent":item.influenceSpent, "influenceBought":item.influenceBought}))
             inner = []
-            for unit in item.gameunit_set.all():
+            # Standard units 
+            for unit in item.gameunit_set.filter(unit__baseUnit__gent=False):
                 # greg need to modify below unit.skills.get to .all() if we move to multiple skills per game
                 line = eotd.models.GameUnitLine( prefix=str(unit.id), initial = {
                     "name":unit.unit.name, "skills":unit.skills, "injuries":unit.injuries.get() if unit.injuries.count() == 1 else None, "summary":unit.unit.gearAsString} )
@@ -583,7 +584,15 @@ def gameForm(request, game_id):
                 line.fields['skills'].queryset=skillSet
 
                 inner.append( line)
-            units.append(inner)
+            # Gentlemen & Jackanapes
+            gents = []
+            for unit in item.gameunit_set.filter(unit__baseUnit__gent=True):
+                # Don't list any minions
+                if eotd.models.UnitTemplate.objects.filter(comesWith=unit.unit.baseUnit).count() < 1:
+                    line = eotd.models.GameGentLine( prefix=str(unit.id), initial = {
+                        "name":unit.unit.name, "retain":eotd.models.CHOICE_NO[0] if unit.retain == eotd.models.GameUnit.RELEASED else eotd.models.CHOICE_YES[0], "rent":unit.unit.baseUnit.gentRetentionCost} )
+                    gents.append( line )
+            units.append({"units":inner,"gents":gents})
         # greg confirm what happens with a logged out user calling canEdit below?
         return render_to_response('eotd/game.html', \
             {
@@ -629,7 +638,6 @@ def gameUpdate(request, game_id):
         print 'gameUpdate Exception', e
         return HttpResponseBadRequest(_('Failed to update game.'))
 
-
 def gameUnits(request, game_id):
     try:
         if request.user.is_authenticated() and request.method == 'POST':
@@ -637,10 +645,19 @@ def gameUnits(request, game_id):
 
             if game.canEdit(request.user):
                 print request.POST # greg remove
-                #team = eotd.models.Team.objects.get(id=int(request.POST['update']))
-                #gameTeam = eotd.models.GameTeam.objects.get(game__id=game_id, team=team)
+
                 for item in request.POST:
-                    if item.endswith('-skills'):
+                    if item.endswith('-retain'):
+                        prefix=item.split('-')[0]
+                        gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
+                        retain = (int(request.POST[item]) == eotd.models.CHOICE_YES[0])
+
+                        if retain:
+                            gameUnit.gameTeam.team.retainGent(gameUnit.unit.baseUnit.id, gameUnit)
+                        else:
+                            gameUnit.gameTeam.team.releaseGent(gameUnit.unit.baseUnit.id, gameUnit)
+
+                    elif item.endswith('-skills'):
                         prefix=item.split('-')[0]
                         gameUnit = eotd.models.GameUnit.objects.get(id=prefix)
                         oldSkill = gameUnit.skills

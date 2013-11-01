@@ -9,6 +9,11 @@ import datetime
 
 #import profiles.models
 
+CHOICE_NO = (0, _('No'))
+CHOICE_YES = (1, _('Yes'))
+
+YES_NO_CHOICES = (
+    CHOICE_NO, CHOICE_YES )
 
 # Create your models here.
 class CampaignApplicant(models.Model):
@@ -368,6 +373,11 @@ class UnitTemplate(models.Model):
     animal = models.BooleanField(default=False)
     # If this unit type should not be available for purchase. May be used for units that come free with others.
     notForPurchase = models.BooleanField(default=False)
+    # If this unit type is a Gentleman & Jackanape special character
+    gent = models.BooleanField(default=False)
+    # If this model is a Gentleman & Jackanape then this is the reduced retention cost.
+    gentRetentionCost = models.SmallIntegerField(default=0, blank=False)
+
     # Used to point to another UnitTemplate that should come free with this template.
     comesWith = models.ManyToManyField('UnitTemplate', default=None, blank=True)
 
@@ -467,6 +477,15 @@ class Unit(models.Model):
         injury.date = datetime.datetime.today()
         self.team.adjustCoins(cost * -1)
         injury.save()
+    # Used to un-retire Gentlemen & Jackanapes without any injuries
+    def restoreVitality(self):
+        try:
+            GameUnitInjury.objects.get(gameUnit__unit=self).delete()
+        except GameUnitInjury.DoesNotExist:
+            pass
+        self.retiredTime=None
+        self.save()
+
     def clearMNG(self):
         for gameunit in self.gameunit_set.filter(gameunitinjury__healed=False, gameunitinjury__injury__penalty=Injury.MNG):
             gameunitinjury = gameunit.gameunitinjury_set.get()
@@ -621,11 +640,12 @@ class Unit(models.Model):
     def isRetired(self):
         return self.retiredTime != None
     def fire(self):
-        # Move all carried items to team store
-        for item in self.unitweapon_set.all():
-            item.unit = None
-            item.team = self.team
-            item.save()
+        if not self.baseUnit.gent:
+            # Move all carried items to team store
+            for item in self.unitweapon_set.all():
+                item.unit = None
+                item.team = self.team
+                item.save()
         if self.isNew:
             self.team.adjustCoins(self.baseUnit.cost)
             self.delete()
@@ -654,6 +674,11 @@ class Team(models.Model):
 
     def __unicode__(self):
         return self.name
+    @property
+    def availableUnitTemplates(self):
+        # Same as the faction version of this except it excludes any Gentlemen & Jackanapes that 
+        # are already part of the team
+        return self.faction.availableUnitTemplates.filter(~models.Q(unit__team=self,gent=True)).order_by('-gent')
     # Does this Team have a leader model
     def hasLeader(self):
         return self.activeUnits.filter(models.Q(baseUnit__leader=True) | models.Q(unitLeaderOverride=True)).count() > 0
@@ -695,17 +720,59 @@ class Team(models.Model):
             if self.units.filter(baseUnit=unitTemplate).count() >= unitTemplate.maxCount:
                 raise PermissionDenied(_("Would exceed maximum number of this unit type allowed."))
         return True
-    def hire(self, unitTemplate):
+    def hire(self, unitTemplate, free=False):
         # will raise exception carrying message explaining the problem.
-        if not self.canHire(unitTemplate):
+        if not free and not self.canHire(unitTemplate):
             raise PermissionDenied('Unable to hire this unit.')
         unit = Unit(faction=self.faction, baseUnit=unitTemplate, team=self, unitOrder=self.units.count()+1)
         unit.save()
-        self.adjustCoins(unitTemplate.cost * -1)
+        if not free:
+            self.adjustCoins(unitTemplate.cost * -1)
         for minion in unitTemplate.comesWith.all():
             minion = Unit(faction=self.faction, baseUnit=unitTemplate.comesWith.all()[0], team=self, unitOrder=self.units.count()+1)
             minion.save()
         return self.coins
+    def releaseGent(self, id, gameUnit):
+        try:
+            unitTemplate = UnitTemplate.objects.get(id=id)
+            for unit in self.activeUnits.filter(baseUnit__id=id, baseUnit__gent=True):
+                print 'Deleting G&J from team'
+                unit.fire()
+            for minion in unitTemplate.comesWith.all():
+                for unit in self.activeUnits.filter(baseUnit__id=minion.id, baseUnit__gent=True):
+                    print 'Deleting G&J minion from team'
+                    unit.fire()
+
+            # Refund money if they were previously retained
+            if gameUnit.retain == gameUnit.RETAINED:
+                print 'increasing team coins by', unitTemplate.gentRetentionCost
+                self.adjustCoins(unitTemplate.gentRetentionCost)
+
+            gameUnit.retain = gameUnit.RELEASED
+            gameUnit.save()
+
+        except Exception as e:
+            print 'releaseGent exception %s: %s' % (id, e)
+    def retainGent(self, id, gameUnit):
+        try:
+            unitTemplate = UnitTemplate.objects.get(id=id)
+            if self.activeUnits.filter(baseUnit__id=id).count() == 0:
+                print 'adding G&J to team as missing during retention'
+                # Bring back the G&J
+                self.allInactiveUnits.filter(baseUnit__id=id)[0].restoreVitality()
+
+            for minion in unitTemplate.comesWith.all():
+                if self.activeUnits.filter(baseUnit__id=minion.id).count() == 0:
+                    print 'Adding G&J minion as missing during retention'
+                    self.allInactiveUnits.filter(baseUnit__id=minion.id)[0].restoreVitality()
+
+            if gameUnit.retain != gameUnit.RETAINED:
+                print 'reducing team coins by', unitTemplate.gentRetentionCost
+                self.adjustCoins(unitTemplate.gentRetentionCost * -1)
+                gameUnit.retain = gameUnit.RETAINED
+                gameUnit.save()
+        except Exception as e:
+            print 'retainGent exception %s: %s' % (id, e)
     def reorder(self, order):
         try:
             for i, item in enumerate(order,1):
@@ -755,7 +822,13 @@ class Team(models.Model):
     def inactiveUnits(self):
         return (self.retiredUnits | self.deadUnits).distinct()
     @property
-    def retiredUnits(self):
+    def allInactiveUnits(self): # DOES include Gentlemen & Jackanapes
+        return (self.allRetiredUnits | self.deadUnits).distinct()
+    @property
+    def retiredUnits(self): # does not include Gentlemen & Jackanapes
+        return Unit.objects.filter(team=self).exclude(retiredTime=None).exclude(baseUnit__gent=True)
+    @property
+    def allRetiredUnits(self): # DOES include Gentlemen & Jackanapes
         return Unit.objects.filter(team=self).exclude(retiredTime=None)
     @property
     def deadUnits(self):
@@ -848,12 +921,19 @@ class GameTeam(models.Model):
 
 # tracks a single units involvement in a game. Did they get any injuries, any new skills, etc?
 class GameUnit(models.Model):
+    UNSET=0
+    RETAINED=1
+    RELEASED=2
+    RETAIN_CHOICES = ( (UNSET,'Unset'), (RETAINED,'Retained'), (RELEASED,'Released') )
+
     class Meta:
         ordering = ['unit__unitOrder']
     gameTeam = models.ForeignKey(GameTeam)
     unit = models.ForeignKey('Unit')
     skills = models.ForeignKey('Skill', related_name='game_unit_for_skill', default=None, blank=True, null=True)
     injuries = models.ManyToManyField('Injury', through="GameUnitInjury", default=None, blank=True)
+    # If this model is a G&J, then did we retain them.
+    retain = models.SmallIntegerField(choices=RETAIN_CHOICES, default=0, blank=False)
     def __unicode__(self):
         return u"%s" % self.unit.name
 
@@ -868,6 +948,11 @@ class GameUnitLine(forms.Form):
     injuries = forms.ModelChoiceField(Injury.objects.all())
     name = forms.CharField()
     summary = forms.CharField()
+
+class GameGentLine(forms.Form):
+    name = forms.CharField()
+    rent = forms.IntegerField()
+    retain = forms.ChoiceField(choices=YES_NO_CHOICES, required=True, label=_("Retain?"))
 
 class GameFormLine(forms.ModelForm):
     team = forms.CharField()

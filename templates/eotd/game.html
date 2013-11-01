@@ -59,7 +59,7 @@
                     </tr>
                 </thead>
 
-                {% for unit in team_unitset %}
+                {% for unit in team_unitset.units %}
                 <tr>
                     <td>{{unit.name.value}}</td>
                     <td>{{unit.summary.value}}</td>
@@ -68,6 +68,25 @@
                 </tr>
                 {% endfor %}
             </table>
+            {% if team_unitset.gents %}
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="2">{% trans 'Gentlemen & Jackanapes' %}</th>
+                        <th>{% trans 'Retainer' %}</th>
+                        <th>{% trans 'Retain?' %}</th>
+                    </tr>
+                </thead>
+                {% for unit in team_unitset.gents %}
+                <tr>
+                    <td colspan="2">{{unit.name.value}}</td>
+                    <td>Retainer: {{unit.rent.value}}</td>
+                    <td>{{unit.retain}}</td>
+                </tr>
+
+                {% endfor %}
+            </table>
+            {% endif %}
             <button style="float:right;" name="update" type="submit">{% trans 'Update' %}</button>
         </div>
         {% endfor %}
